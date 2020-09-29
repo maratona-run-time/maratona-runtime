@@ -1,0 +1,25 @@
+# git files
+*.git
+
+# executaveis
+*.exe
+*.bin
+*.bat
+*.out
+
+# outputs and inputs
+*out.txt
+*in.txt
+
+# arquivos intermediarios
+*.o
+
+# compactados
+*.zip
+*.tar
+*.gz
+*.7z
+*.bz2
+
+# hidden files
+.*
