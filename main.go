@@ -24,7 +24,7 @@ func main() {
 
 	go execute(ctx, file, inputFile, actualOutput, errorOutput)
 	select {
-	case <-ctx.Done(): // Tirando esse case os programas de RTE sao avaliados corretamente
+	case <-ctx.Done():
 		fmt.Println("deu tle")
 		return
 	case err := <-errorOutput:
