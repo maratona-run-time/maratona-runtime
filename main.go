@@ -14,7 +14,11 @@ func main() {
 
 	ctx, _ := timerContext()
 
-	file := []string{"./a"}
+	executable := "a.out"
+	if len(os.Args[1:]) > 0 {
+		executable = os.Args[1]
+	}
+	file := []string{fmt.Sprintf("./%s", executable)}
 
 	inputFile, _ := os.Open("in")
 
