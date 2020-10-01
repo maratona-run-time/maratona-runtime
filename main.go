@@ -55,5 +55,5 @@ func execute(ctx context.Context, executable []string, inputFile *os.File, outpu
 }
 
 func timerContext() (context.Context, context.CancelFunc) {
-	return context.WithDeadline(context.Background(), time.Now().Add(2000000))
+	return context.WithDeadline(context.Background(), time.Now().Add(time.Second*2))
 }
