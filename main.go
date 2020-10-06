@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -33,8 +35,14 @@ func main() {
 		return
 	case out := <-actualOutput:
 		fmt.Println("Compara as saidas")
-		stringOutput := string(out)
-		fmt.Println(stringOutput)
+		expectedData, _ := ioutil.ReadFile("out")
+		expectedOut := string(expectedData)
+		programOut := string(out)
+		if strings.EqualFold(programOut, expectedOut) {
+			fmt.Println("deu ac")
+		} else {
+			fmt.Println("deu wa")
+		}
 		return
 	}
 }
