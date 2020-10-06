@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+func compare(expectedOutput string, programOutput string) bool {
+	return strings.EqualFold(programOutput, expectedOutput)
+}
+
 func verdict(executable []string, inputFileName string, outputFileName string) (string, error) {
 	actualOutput := make(chan []byte)
 	errorOutput := make(chan error)
@@ -25,9 +29,9 @@ func verdict(executable []string, inputFileName string, outputFileName string) (
 		return "RTE", err
 	case out := <-actualOutput:
 		expectedData, _ := ioutil.ReadFile(outputFileName)
-		expectedOut := string(expectedData)
-		programOut := string(out)
-		if strings.EqualFold(programOut, expectedOut) {
+		expectedOutput := string(expectedData)
+		programOutput := string(out)
+		if compare(expectedOutput, programOutput) {
 			return "AC", nil
 		} else {
 			return "WA", nil
@@ -42,6 +46,7 @@ func main() {
 	}
 	file := []string{fmt.Sprintf("./%s", executable)}
 
+	// TODO: get input and output file names from command line
 	status, err := verdict(file, "in", "out")
 	fmt.Println(status)
 	if err != nil {
