@@ -57,11 +57,7 @@ func main() {
 func execute(ctx context.Context, executable []string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {
 	cmd := exec.CommandContext(ctx, executable[0], executable[1:]...)
 	cmd.Stdin = inputFile
-	fmt.Println("Pegando o output..")
-	programOutput, err := cmd.Output() // Nao ta conseguindo pegar o output de um arquivo que tenha dado RTE, tirar o case da linha 23 resolve
-	fmt.Println("pegou")
-	fmt.Println(err)
-	fmt.Println(programOutput)
+	programOutput, err := cmd.Output()
 	if err != nil {
 		errorOutput <- err
 		return
