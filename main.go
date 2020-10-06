@@ -10,40 +10,42 @@ import (
 	"time"
 )
 
-func main() {
+func verdict(executable []string, inputFileName string, outputFileName string) (string, error) {
 	actualOutput := make(chan []byte)
 	errorOutput := make(chan error)
-
 	ctx, _ := timerContext()
 
+	inputFile, _ := os.Open(inputFileName)
+
+	go execute(ctx, executable, inputFile, actualOutput, errorOutput)
+	select {
+	case <-ctx.Done():
+		return "TLE", nil
+	case err := <-errorOutput:
+		return "RTE", err
+	case out := <-actualOutput:
+		expectedData, _ := ioutil.ReadFile(outputFileName)
+		expectedOut := string(expectedData)
+		programOut := string(out)
+		if strings.EqualFold(programOut, expectedOut) {
+			return "AC", nil
+		} else {
+			return "WA", nil
+		}
+	}
+}
+
+func main() {
 	executable := "a.out"
 	if len(os.Args[1:]) > 0 {
 		executable = os.Args[1]
 	}
 	file := []string{fmt.Sprintf("./%s", executable)}
 
-	inputFile, _ := os.Open("in")
-
-	go execute(ctx, file, inputFile, actualOutput, errorOutput)
-	select {
-	case <-ctx.Done():
-		fmt.Println("deu tle")
-		return
-	case err := <-errorOutput:
-		fmt.Println("deu rte")
-		fmt.Println("%s", err)
-		return
-	case out := <-actualOutput:
-		fmt.Println("Compara as saidas")
-		expectedData, _ := ioutil.ReadFile("out")
-		expectedOut := string(expectedData)
-		programOut := string(out)
-		if strings.EqualFold(programOut, expectedOut) {
-			fmt.Println("deu ac")
-		} else {
-			fmt.Println("deu wa")
-		}
-		return
+	status, err := verdict(file, "in", "out")
+	fmt.Println(status)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
