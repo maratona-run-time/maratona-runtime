@@ -1,4 +1,4 @@
-package main
+package executor
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-func compare(expectedOutput string, programOutput string) bool {
+func Compare(expectedOutput string, programOutput string) bool {
 	return strings.EqualFold(programOutput, expectedOutput)
 }
 
-func verdict(executable []string, inputFileName string, outputFileName string) (string, error) {
+func Verdict(executable []string, inputFileName string, outputFileName string) (string, error) {
 	actualOutput := make(chan []byte)
 	errorOutput := make(chan error)
 	ctx, _ := timerContext()
@@ -31,7 +31,7 @@ func verdict(executable []string, inputFileName string, outputFileName string) (
 		expectedData, _ := ioutil.ReadFile(outputFileName)
 		expectedOutput := string(expectedData)
 		programOutput := string(out)
-		if compare(expectedOutput, programOutput) {
+		if Compare(expectedOutput, programOutput) {
 			return "AC", nil
 		} else {
 			return "WA", nil
@@ -47,7 +47,7 @@ func main() {
 	file := []string{fmt.Sprintf("./%s", executable)}
 
 	// TODO: get input and output file names from command line
-	status, err := verdict(file, "in", "out")
+	status, err := Verdict(file, "in", "out")
 	fmt.Println(status)
 	if err != nil {
 		fmt.Println(err)
