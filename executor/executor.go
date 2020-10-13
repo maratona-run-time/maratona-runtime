@@ -2,40 +2,22 @@ package executor
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"os/exec"
-	"time"
-	"Maratona-Runtime/comparator"
 )
 
-func Verdict(executable []string, inputFileName string, outputFileName string) (string, error) {
-	actualOutput := make(chan []byte)
-	errorOutput := make(chan error)
-	ctx, _ := timerContext()
-
+func Execute(ctx context.Context, executablePath <-chan string, inputFileName string, output chan<- []byte, errorOutput chan<- error) {
 	inputFile, _ := os.Open(inputFileName)
 
-	go execute(ctx, executable, inputFile, actualOutput, errorOutput)
-	select {
-	case <-ctx.Done():
-		return "TLE", nil
-	case err := <-errorOutput:
-		return "RTE", err
-	case out := <-actualOutput:
-		expectedData, _ := ioutil.ReadFile(outputFileName)
-		expectedOutput := string(expectedData)
-		programOutput := string(out)
-		if comparator.Compare(expectedOutput, programOutput) {
-			return "AC", nil
-		} else {
-			return "WA", nil
-		}
-	}
+	path := <-executablePath
+	executable := fmt.Sprintf("./%s", path)
+
+	go execute(ctx, executable, inputFile, output, errorOutput)
 }
 
-func execute(ctx context.Context, executable []string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {
-	cmd := exec.CommandContext(ctx, executable[0], executable[1:]...)
+func execute(ctx context.Context, executable string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {
+	cmd := exec.CommandContext(ctx, executable)
 	cmd.Stdin = inputFile
 	programOutput, err := cmd.Output()
 	if err != nil {
@@ -43,8 +25,4 @@ func execute(ctx context.Context, executable []string, inputFile *os.File, outpu
 		return
 	}
 	output <- programOutput
-}
-
-func timerContext() (context.Context, context.CancelFunc) {
-	return context.WithDeadline(context.Background(), time.Now().Add(time.Second*2))
 }
