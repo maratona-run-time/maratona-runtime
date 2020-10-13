@@ -5,13 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
+	"Maratona-Runtime/comparator"
 )
-
-func Compare(expectedOutput string, programOutput string) bool {
-	return strings.EqualFold(programOutput, expectedOutput)
-}
 
 func Verdict(executable []string, inputFileName string, outputFileName string) (string, error) {
 	actualOutput := make(chan []byte)
@@ -30,7 +26,7 @@ func Verdict(executable []string, inputFileName string, outputFileName string) (
 		expectedData, _ := ioutil.ReadFile(outputFileName)
 		expectedOutput := string(expectedData)
 		programOutput := string(out)
-		if Compare(expectedOutput, programOutput) {
+		if comparator.Compare(expectedOutput, programOutput) {
 			return "AC", nil
 		} else {
 			return "WA", nil
