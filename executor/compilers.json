@@ -1,0 +1,4 @@
+{
+    "C": "gcc programa.c -o programa.out",
+    "Python": "copy programa.py programa.out"
+}
