@@ -2,7 +2,6 @@ package executor
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -36,21 +35,6 @@ func Verdict(executable []string, inputFileName string, outputFileName string) (
 		} else {
 			return "WA", nil
 		}
-	}
-}
-
-func main() {
-	executable := "a.out"
-	if len(os.Args[1:]) > 0 {
-		executable = os.Args[1]
-	}
-	file := []string{fmt.Sprintf("./%s", executable)}
-
-	// TODO: get input and output file names from command line
-	status, err := Verdict(file, "in", "out")
-	fmt.Println(status)
-	if err != nil {
-		fmt.Println(err)
 	}
 }
 
