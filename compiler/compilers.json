@@ -1,0 +1,7 @@
+{
+    "C": ["gcc", "programa.c", "-o", "programa.out"],
+    "C++": ["g++", "programa.cpp", "-o", "programa.out"],
+    "C++11": ["g++", "programa.cpp", "-std=c++11", "-o", "programa.out"],
+    "Python": ["cp", "programa.py", "programa.out"],
+    "Go": ["go", "build", "-o", "programa.out", "programa.go"]
+}
