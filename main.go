@@ -1,27 +1,34 @@
 package main
 
 import (
+	"Maratona-Runtime/comparator"
+	"Maratona-Runtime/executor"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
-	"Maratona-Runtime/comparator"
-	"Maratona-Runtime/executor"
 )
 
 func main() {
 	executable := "a.out"
+	inputFileName := "in"
+	outputFileName := "out"
 	if len(os.Args[1:]) > 0 {
 		executable = os.Args[1]
 	}
+	if len(os.Args[2:]) > 0 {
+		inputFileName = os.Args[2]
+	}
+	if len(os.Args[3:]) > 0 {
+		outputFileName = os.Args[3]
+	}
 	executablePath := make(chan string)
 
-	// TODO: get input and output file names from command line
 	ctx, _ := timerContext()
 	errorOutput := make(chan error)
 	output := make(chan []byte)
-	go executor.Execute(ctx, executablePath, "in", output, errorOutput)
+	go executor.Execute(ctx, executablePath, inputFileName, output, errorOutput)
 	executablePath <- executable // Compiler
 	select {
 	case <-ctx.Done():
@@ -30,7 +37,7 @@ func main() {
 		fmt.Println("RTE")
 		fmt.Println(err)
 	case out := <-output:
-		expectedData, _ := ioutil.ReadFile("out")
+		expectedData, _ := ioutil.ReadFile(outputFileName)
 		expectedOutput := string(expectedData)
 		programOutput := string(out)
 		if comparator.Compare(expectedOutput, programOutput) {
