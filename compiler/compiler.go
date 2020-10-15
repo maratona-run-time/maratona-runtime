@@ -1,4 +1,4 @@
-package main
+package compiler
 
 import (
 	"encoding/json"
@@ -8,18 +8,20 @@ import (
 	"os/exec"
 )
 
-func Compile(compiler string) {
+func Compile(compiler string) int {
 	logFile, _ := os.OpenFile("error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	defer logFile.Close()
 	log.SetOutput(logFile)
 	jsonFile, openErr := os.Open("compilers.json")
 	defer jsonFile.Close()
 	if openErr != nil {
-		log.Fatal("Arquivo 'compilers.json' não pode ser aberto\n", openErr)
+		log.Println("Arquivo 'compilers.json' não pode ser aberto\n", openErr)
+		return 1
 	}
 	byteValueJSON, readErr := ioutil.ReadAll(jsonFile)
 	if readErr != nil {
-		log.Fatal("Arquivo 'compilers.json' não pode ser lido\n", readErr)
+		log.Println("Arquivo 'compilers.json' não pode ser lido\n", readErr)
+		return 1
 	}
 	var compilationCommand map[string][]string
 	json.Unmarshal(byteValueJSON, &compilationCommand)
@@ -27,10 +29,8 @@ func Compile(compiler string) {
 	commands := compilationCommand[compiler]
 	_, execErr := exec.Command(commands[0], commands[1:]...).Output()
 	if execErr != nil {
-		log.Fatal("Erro compilacao\n", execErr)
+		log.Println("Erro na compilação\n", execErr)
+		return 1
 	}
-}
-
-func main() {
-	Compile("C")
+	return 0
 }
