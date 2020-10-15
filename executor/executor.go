@@ -7,10 +7,9 @@ import (
 	"os/exec"
 )
 
-func Execute(ctx context.Context, executablePath <-chan string, inputFileName string, output chan<- []byte, errorOutput chan<- error) {
+func Execute(ctx context.Context, path string, inputFileName string, output chan<- []byte, errorOutput chan<- error) {
 	inputFile, _ := os.Open(inputFileName)
 
-	path := <-executablePath
 	executable := fmt.Sprintf("./%s", path)
 
 	go execute(ctx, executable, inputFile, output, errorOutput)

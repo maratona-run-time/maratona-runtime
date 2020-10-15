@@ -2,6 +2,7 @@ package main
 
 import (
 	"Maratona-Runtime/comparator"
+	"Maratona-Runtime/compiler"
 	"Maratona-Runtime/executor"
 	"context"
 	"fmt"
@@ -11,11 +12,11 @@ import (
 )
 
 func main() {
-	executable := "a.out"
+	language := "C"
 	inputFileName := "in"
 	outputFileName := "out"
 	if len(os.Args[1:]) > 0 {
-		executable = os.Args[1]
+		language = os.Args[1]
 	}
 	if len(os.Args[2:]) > 0 {
 		inputFileName = os.Args[2]
@@ -23,13 +24,11 @@ func main() {
 	if len(os.Args[3:]) > 0 {
 		outputFileName = os.Args[3]
 	}
-	executablePath := make(chan string)
-
-	ctx, _ := timerContext()
+	path, _ := compiler.Compile(language)
 	errorOutput := make(chan error)
 	output := make(chan []byte)
-	go executor.Execute(ctx, executablePath, inputFileName, output, errorOutput)
-	executablePath <- executable // Compiler
+	ctx, _ := timerContext()
+	go executor.Execute(ctx, path, inputFileName, output, errorOutput)
 	select {
 	case <-ctx.Done():
 		fmt.Println("TLE")
