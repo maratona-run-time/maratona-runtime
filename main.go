@@ -1,75 +1,58 @@
 package main
 
 import (
+	"Maratona-Runtime/comparator"
+	"Maratona-Runtime/compiler"
+	"Maratona-Runtime/executor"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"strings"
 	"time"
 )
 
 func main() {
-	actualOutput := make(chan []byte)
-	errorOutput := make(chan error)
-
-	ctx, errContext := timerContext()
-
-	if errContext != nil {
-		fmt.Println(errContext)
-		return
-	}
-
-	executable := "a.out"
+	language := "C"
+	inputFileName := "in"
+	outputFileName := "out"
 	if len(os.Args[1:]) > 0 {
-		executable = os.Args[1]
+		language = os.Args[1]
 	}
-	file := []string{fmt.Sprintf("./%s", executable)}
-
-	inputFile, errInFile := os.Open("in")
-
-	if errInFile != nil {
-		fmt.Println(errInFile)
+	if len(os.Args[2:]) > 0 {
+		inputFileName = os.Args[2]
+	}
+	if len(os.Args[3:]) > 0 {
+		outputFileName = os.Args[3]
+	}
+	path, errCompiler := compiler.Compile(language)
+	if errCompiler != nil {
+		fmt.Println("compiler error:", errCompiler)
 		return
 	}
 
-	go execute(ctx, file, inputFile, actualOutput, errorOutput)
+	errorOutput := make(chan error)
+	output := make(chan []byte)
+
+	ctx, cancel := timerContext()
+	defer cancel()
+
+	go executor.Execute(ctx, path, inputFileName, output, errorOutput)
 	select {
 	case <-ctx.Done():
-		fmt.Println("deu tle")
-		return
+		fmt.Println("TLE")
 	case err := <-errorOutput:
-		fmt.Println("deu rte")
-		fmt.Println("%s", err)
-		return
-	case out := <-actualOutput:
-		fmt.Println("Compara as saidas")
-		expectedData, _ := ioutil.ReadFile("out")
-		expectedOut := string(expectedData)
-		programOut := string(out)
-		if strings.EqualFold(programOut, expectedOut) {
-			fmt.Println("deu ac")
+		fmt.Println("RTE")
+		fmt.Println(err)
+	case out := <-output:
+		expectedData, _ := ioutil.ReadFile(outputFileName)
+		expectedOutput := string(expectedData)
+		programOutput := string(out)
+		if comparator.Compare(expectedOutput, programOutput) {
+			fmt.Println("AC")
 		} else {
-			fmt.Println("deu wa")
+			fmt.Println("WA")
 		}
-		return
 	}
-}
-
-func execute(ctx context.Context, executable []string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {
-	cmd := exec.CommandContext(ctx, executable[0], executable[1:]...)
-	cmd.Stdin = inputFile
-	fmt.Println("Pegando o output..")
-	programOutput, err := cmd.Output() // Nao ta conseguindo pegar o output de um arquivo que tenha dado RTE, tirar o case da linha 23 resolve
-	fmt.Println("pegou")
-	fmt.Println(err)
-	fmt.Println(programOutput)
-	if err != nil {
-		errorOutput <- err
-		return
-	}
-	output <- programOutput
 }
 
 func timerContext() (context.Context, context.CancelFunc) {
