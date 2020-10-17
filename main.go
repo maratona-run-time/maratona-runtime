@@ -14,7 +14,12 @@ func main() {
 	actualOutput := make(chan []byte)
 	errorOutput := make(chan error)
 
-	ctx, _ := timerContext()
+	ctx, errContext := timerContext()
+
+	if errContext != nil {
+		fmt.Println(errContext)
+		return
+	}
 
 	executable := "a.out"
 	if len(os.Args[1:]) > 0 {
@@ -22,7 +27,12 @@ func main() {
 	}
 	file := []string{fmt.Sprintf("./%s", executable)}
 
-	inputFile, _ := os.Open("in")
+	inputFile, errInFile := os.Open("in")
+
+	if errInFile != nil {
+		fmt.Println(errInFile)
+		return
+	}
 
 	go execute(ctx, file, inputFile, actualOutput, errorOutput)
 	select {
