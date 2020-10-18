@@ -1,17 +1,18 @@
 package main
 
 import (
-	"Maratona-Runtime/executor"
 	"testing"
+
+	"github.com/maratona-run-time/Maratona-Runtime/comparator"
 )
 
 func TestCompare(t *testing.T) {
 	expected, program := "YES", "yes"
-	if executor.Compare(expected, program) == false {
+	if comparator.Compare(expected, program) == false {
 		t.Errorf("\"%s\" should be equal to \"%s\"", expected, program)
 	}
 	expected, program = "yes", "no"
-	if executor.Compare(expected, program) == true {
+	if comparator.Compare(expected, program) == true {
 		t.Errorf("\"%s\" should be different to \"%s\"", expected, program)
 	}
 }
