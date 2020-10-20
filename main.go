@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/maratona-run-time/Maratona-Runtime/comparator"
 	"github.com/maratona-run-time/Maratona-Runtime/compiler"
-	"github.com/maratona-run-time/Maratona-Runtime/executor"
+	"github.com/maratona-run-time/Maratona-Runtime/verdict"
 )
 
 func main() {
@@ -29,27 +27,10 @@ func main() {
 		return
 	}
 
-	statusChan := make(chan []string)
 	timeout := float32(2)
+	resultChan := make(chan string)
+	go verdict.Verdict(timeout, path, inputFileName, outputFileName, resultChan)
 
-	go executor.Execute(path, inputFileName, timeout, statusChan)
-
-	status := <-statusChan
-
-	switch status[0] {
-	case "TLE":
-		fmt.Println("TLE")
-	case "RTE":
-		fmt.Println("RTE")
-		fmt.Println(status[1])
-	case "OK":
-		expectedData, _ := ioutil.ReadFile(outputFileName)
-		expectedOutput := string(expectedData)
-		programOutput := status[1]
-		if comparator.Compare(expectedOutput, programOutput) {
-			fmt.Println("AC")
-		} else {
-			fmt.Println("WA")
-		}
-	}
+	result := <-resultChan
+	fmt.Println(result)
 }
