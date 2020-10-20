@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 )
 
-func Execute(ctx context.Context, path string, inputFileName string, output chan<- []byte, errorOutput chan<- error) {
+func Execute(path string,
+	inputFileName string,
+	timeout float32,
+	status chan<- []string) {
 	inputFile, errInFile := os.Open(inputFileName)
 	if errInFile != nil {
 		fmt.Println(errInFile)
@@ -16,7 +20,22 @@ func Execute(ctx context.Context, path string, inputFileName string, output chan
 
 	executable := fmt.Sprintf("./%s", path)
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
+	defer cancel()
+
+	errorOutput := make(chan error)
+	output := make(chan []byte)
+
 	go execute(ctx, executable, inputFile, output, errorOutput)
+
+	select {
+	case <-ctx.Done():
+		status <- []string{"TLE"}
+	case err := <-errorOutput:
+		status <- []string{"RTE", err.Error()}
+	case out := <-output:
+		status <- []string{"OK", string(out)}
+	}
 }
 
 func execute(ctx context.Context, executable string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {

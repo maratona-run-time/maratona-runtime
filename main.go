@@ -1,11 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/maratona-run-time/Maratona-Runtime/comparator"
 	"github.com/maratona-run-time/Maratona-Runtime/compiler"
@@ -31,31 +29,27 @@ func main() {
 		return
 	}
 
-	errorOutput := make(chan error)
-	output := make(chan []byte)
+	statusChan := make(chan []string)
+	timeout := float32(2)
 
-	ctx, cancel := timerContext()
-	defer cancel()
+	go executor.Execute(path, inputFileName, timeout, statusChan)
 
-	go executor.Execute(ctx, path, inputFileName, output, errorOutput)
-	select {
-	case <-ctx.Done():
+	status := <-statusChan
+
+	switch status[0] {
+	case "TLE":
 		fmt.Println("TLE")
-	case err := <-errorOutput:
+	case "RTE":
 		fmt.Println("RTE")
-		fmt.Println(err)
-	case out := <-output:
+		fmt.Println(status[1])
+	case "OK":
 		expectedData, _ := ioutil.ReadFile(outputFileName)
 		expectedOutput := string(expectedData)
-		programOutput := string(out)
+		programOutput := status[1]
 		if comparator.Compare(expectedOutput, programOutput) {
 			fmt.Println("AC")
 		} else {
 			fmt.Println("WA")
 		}
 	}
-}
-
-func timerContext() (context.Context, context.CancelFunc) {
-	return context.WithDeadline(context.Background(), time.Now().Add(time.Second*2))
 }
