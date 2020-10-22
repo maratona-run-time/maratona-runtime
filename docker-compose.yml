@@ -6,10 +6,9 @@ services:
     image: "comparator:test"
     networks:
       - maratona-net
-  terminal:
-    image: "comparator:test2"
-    ports:
-      - "5000:5000"
+  curl:
+    image: "ubuntu-curl:latest"
+    command: tail -F .
     networks:
       - maratona-net
     
