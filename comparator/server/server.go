@@ -11,6 +11,9 @@ type req struct {
 	S2 string `json:"s2"`
 }
 
+// POST /
+// 	Espera parâmetros JSON 's1' e 's2' com as duas strings que devem ser comparadas.
+//	Retorna "AC" se ambas strings são iguais, "WA" caso sejam diferentes.
 func main() {
 	m := martini.Classic()
 	m.Post("/", binding.Json(req{}), func(r req) string {
