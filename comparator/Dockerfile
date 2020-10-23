@@ -1,12 +1,13 @@
 FROM golang:alpine
 
+EXPOSE 8080
+
 WORKDIR /go/src/app
 
-COPY comparator.go .
+COPY go.sum go.mod ./
 
-COPY server/ ./server
+RUN go mod download
 
-RUN go get github.com/go-martini/martini
-RUN go get github.com/martini-contrib/binding
+COPY comparator/ comparator/
 
-CMD ["go", "run", "server/server.go"]
+CMD ["go", "run", "comparator/server/server.go"]
