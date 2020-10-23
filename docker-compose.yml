@@ -3,17 +3,10 @@ services:
   comparator:
     ports:
       - "8080:8080"
-    #image: "comparator:test"
     build:
       context: ./
       dockerfile: comparator/Dockerfile
     networks:
       - maratona-net
-  curl:
-    image: "ubuntu-curl:latest"
-    command: tail -F .
-    networks:
-      - maratona-net
-    
 networks: 
   maratona-net:
