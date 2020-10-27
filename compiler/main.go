@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/go-martini/martini"
-	"github.com/maratona-run-time/Maratona-Runtime/compiler/src"
+	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/martini-contrib/binding"
 
 	"os"
@@ -17,6 +17,7 @@ func main() {
 	m := martini.Classic()
 	m.Post("/", binding.Json(req{}), func(r req) string {
 		f, createErr := os.Create("program")
+		defer f.Close()
 		if createErr != nil {
 			// log
 			return "deu ruim"
