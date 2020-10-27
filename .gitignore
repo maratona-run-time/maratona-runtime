@@ -11,6 +11,9 @@
 *out.txt
 *in.txt
 
+# logs
+*.log
+
 # arquivos intermediarios
 *.o
 

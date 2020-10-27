@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/maratona-run-time/Maratona-Runtime/comparator"
-	"github.com/maratona-run-time/Maratona-Runtime/compiler"
+	"github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/maratona-run-time/Maratona-Runtime/executor"
 )
 

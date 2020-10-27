@@ -7,11 +7,11 @@ import (
 )
 
 func setup(lang string, file string) {
-	exec.Command("cp", "tests/"+file, "./").Output()
+	exec.Command("cp", "tests/"+file, "./program").Output()
 }
 
 func teardown(file string) {
-	exec.Command("rm", "programa.out", file).Output()
+	exec.Command("rm", "program.out", "program").Output()
 }
 
 func TestCompilation(t *testing.T) {
