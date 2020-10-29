@@ -13,9 +13,7 @@ func Execute(ctx context.Context, path string, inputFileName string, output chan
 		fmt.Println(errInFile)
 		return
 	}
-
 	executable := fmt.Sprintf("./%s", path)
-
 	go execute(ctx, executable, inputFile, output, errorOutput)
 }
 
