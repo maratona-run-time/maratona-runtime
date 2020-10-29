@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/go-martini/martini"
-	"github.com/maratona-run-time/Maratona-Runtime/comparator"
+	comparator "github.com/maratona-run-time/Maratona-Runtime/comparator/src"
 	"github.com/martini-contrib/binding"
 )
 
