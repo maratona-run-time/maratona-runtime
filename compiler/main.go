@@ -1,6 +1,10 @@
 package main
 
 import (
+	"io"
+	"mime/multipart"
+	"net/http"
+
 	"github.com/go-martini/martini"
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/martini-contrib/binding"
@@ -8,27 +12,31 @@ import (
 	"os"
 )
 
-type req struct {
-	Program  string `json:"program"`
-	Language string `json:"language"`
+type FileForm struct {
+	Language string                `form:"language"`
+	Program  *multipart.FileHeader `form:"program"`
 }
 
 func main() {
 	m := martini.Classic()
-	m.Post("/", binding.Json(req{}), func(r req) string {
-		f, createErr := os.Create("program")
-		defer f.Close()
+	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
+		fileName := req.Program.Filename
+		f, createErr := os.Create(fileName)
 		if createErr != nil {
-			// log
-			return "deu ruim"
+			panic(createErr)
 		}
-		f.WriteString(r.Program)
-		ret, compilerErr := compiler.Compile(r.Language)
+		program, pErr := req.Program.Open()
+		if pErr != nil {
+			panic(pErr)
+		}
+		io.Copy(f, program)
+		f.Close()
+		program.Close()
+		ret, compilerErr := compiler.Compile(req.Language)
 		if compilerErr != nil {
-			// log
-			return compilerErr.Error()
+			panic(compilerErr)
 		}
-		return ret
+		http.ServeFile(rs, rq, ret)
 	})
 	m.RunOnAddr(":8080")
 }
