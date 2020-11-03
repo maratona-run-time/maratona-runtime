@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/maratona-run-time/Maratona-Runtime/comparator"
-	"github.com/maratona-run-time/Maratona-Runtime/compiler/src"
-	"github.com/maratona-run-time/Maratona-Runtime/executor"
+	comparator "github.com/maratona-run-time/Maratona-Runtime/comparator/src"
+	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
+	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 )
 
 func main() {
