@@ -4,4 +4,4 @@ WORKDIR /go/src/app
 COPY go.sum go.mod ./
 RUN go mod download
 COPY comparator/ comparator/
-CMD ["go", "run", "comparator/server/server.go"]
+CMD ["go", "run", "comparator/main.go"]
