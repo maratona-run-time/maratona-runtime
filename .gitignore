@@ -7,9 +7,8 @@
 *.bat
 *.out
 
-# outputs and inputs
-*out.txt
-*in.txt
+# não ignorar outputs
+!**/outputs/*.out
 
 # arquivos intermediarios
 *.o
