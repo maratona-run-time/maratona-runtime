@@ -6,6 +6,7 @@ WORKDIR /go/src/app
 # add source code
 COPY . .
 # run main.go
+ENV CGO_ENABLED=0
 RUN go build -o main
 #CMD ["go", "run", "main.go"]
 
