@@ -13,6 +13,8 @@ import (
 	"github.com/martini-contrib/binding"
 )
 
+// FileForm define o tipo de dados esperado no POST.
+// Recebe um arquivo binário e um conjunto de arquivos de entrada.
 type FileForm struct {
 	Binary *multipart.FileHeader   `form:"binary"`
 	Tests  []*multipart.FileHeader `form:"tests"`
@@ -20,7 +22,7 @@ type FileForm struct {
 
 func main() {
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(FileForm{}), func(f FileForm) {
+	m.Post("/", binding.MultipartForm(FileForm{}), func(f FileForm) string {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
 			panic(rErr)
@@ -59,13 +61,14 @@ func main() {
 
 		ch := make(chan []byte)
 		chErr := make(chan error)
-		ctx, _ := context.WithTimeout(context.Background(), (time.Second * 2))
+		ctx, cancel := context.WithTimeout(context.Background(), (time.Second * 2))
+		defer cancel()
 		go executor.Execute(ctx, "program.out", "tests/001.in", ch, chErr)
 		select {
 		case res := <-ch:
-			fmt.Println(string(res))
+			return string(res)
 		case err := <-chErr:
-			fmt.Println("Erro: " + err.Error())
+			panic(err)
 		}
 	})
 	m.RunOnAddr(":8080")
