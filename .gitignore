@@ -10,6 +10,9 @@
 # não ignorar outputs
 !**/outputs/*.out
 
+# logs
+*.log
+
 # arquivos intermediarios
 *.o
 

@@ -17,7 +17,6 @@ func Execute(path string,
 		fmt.Println(errInFile)
 		return
 	}
-
 	executable := fmt.Sprintf("./%s", path)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))

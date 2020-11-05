@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/maratona-run-time/Maratona-Runtime/compiler"
+	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/maratona-run-time/Maratona-Runtime/verdict"
 )
 
