@@ -5,36 +5,63 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
 
 func Execute(path string,
-	inputFileName string,
-	timeout float32,
-	status chan<- []string) {
-	inputFile, errInFile := os.Open(inputFileName)
-	if errInFile != nil {
-		fmt.Println(errInFile)
-		return
+	inputsFolder string,
+	timeout float32) [][]string {
+
+	var files []string
+
+	root := inputsFolder
+	err := filepath.Walk(root, func(inputPath string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		basename := info.Name()
+		if filepath.Ext(basename) == ".in" {
+			files = append(files, inputPath)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
 	}
-	executable := fmt.Sprintf("./%s", path)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
-	defer cancel()
+	var res [][]string
 
-	errorOutput := make(chan error)
-	output := make(chan []byte)
+	for _, inputFile := range files {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
+		defer cancel()
 
-	go execute(ctx, executable, inputFile, output, errorOutput)
+		errorOutput := make(chan error)
+		output := make(chan []byte)
 
-	select {
-	case <-ctx.Done():
-		status <- []string{"TLE"}
-	case err := <-errorOutput:
-		status <- []string{"RTE", err.Error()}
-	case out := <-output:
-		status <- []string{"OK", string(out)}
+		executable := fmt.Sprintf("./%s", path)
+
+		file, fileErr := os.Open(inputFile)
+		if fileErr != nil {
+			panic(fileErr)
+		}
+		defer file.Close()
+
+		go execute(ctx, executable, file, output, errorOutput)
+
+		select {
+		case <-ctx.Done():
+			res = append(res, []string{inputFile, "TLE", "Tempo limite excedido"})
+			return res
+		case err := <-errorOutput:
+			res = append(res, []string{inputFile, "RTE", err.Error()})
+			return res
+		case out := <-output:
+			res = append(res, []string{inputFile, "OK", string(out)})
+		}
 	}
+
+	return res
 }
 
 func execute(ctx context.Context, executable string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {

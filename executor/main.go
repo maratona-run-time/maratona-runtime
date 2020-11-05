@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -15,12 +16,12 @@ import (
 // Recebe um arquivo binário e um conjunto de arquivos de entrada.
 type FileForm struct {
 	Binary *multipart.FileHeader   `form:"binary"`
-	Tests  []*multipart.FileHeader `form:"tests"`
+	Inputs []*multipart.FileHeader `form:"inputs"`
 }
 
 func main() {
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(FileForm{}), func(f FileForm) string {
+	m.Post("/", binding.MultipartForm(FileForm{}), func(f FileForm) []byte {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
 			panic(rErr)
@@ -41,9 +42,9 @@ func main() {
 		binaryFile.Close()
 		receivedFile.Close()
 
-		os.Mkdir("tests", 0700)
-		for i, file := range f.Tests {
-			testFileName := fmt.Sprintf("tests/%03d.in", i+1)
+		os.Mkdir("inputs", 0700)
+		for i, file := range f.Inputs {
+			testFileName := fmt.Sprintf("inputs/%03d.in", i+1)
 			testFile, testFileErr := os.Create(testFileName)
 			if testFileErr != nil {
 				panic(testFileErr)
@@ -57,10 +58,9 @@ func main() {
 			io.Copy(testFile, receivedTestFile)
 		}
 
-		status := make(chan []string)
-		go executor.Execute("program.out", "tests/001.in", 2., status)
-		res := <-status
-		return string(res[0])
+		res := executor.Execute("program.out", "inputs", 2.)
+		jsonResult, _ := json.Marshal(res)
+		return jsonResult
 	})
 	m.RunOnAddr(":8080")
 }
