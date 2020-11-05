@@ -1,0 +1,28 @@
+version: "3.3"
+services:
+  comparator:
+    ports:
+      - "8080:8080"
+    build:
+      context: ./
+      dockerfile: comparator/Dockerfile
+    networks:
+      - maratona-net
+  compiler:
+    ports:
+      - "8081:8080"
+    build:
+      context: ./
+      dockerfile: compiler/Dockerfile
+    networks:
+      - maratona-net
+  executor:
+    ports:
+      - "8082:8080"
+    build:
+      context: ./
+      dockerfile: executor/Dockerfile
+    networks:
+      - maratona-net
+networks: 
+  maratona-net:
