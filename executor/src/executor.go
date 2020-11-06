@@ -32,7 +32,7 @@ func Execute(path string,
 
 	var res [][]string
 
-	for _, inputFile := range files {
+	for _, inputFileName := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
 		defer cancel()
 
@@ -41,7 +41,7 @@ func Execute(path string,
 
 		executable := fmt.Sprintf("./%s", path)
 
-		file, fileErr := os.Open(inputFile)
+		file, fileErr := os.Open(inputFileName)
 		if fileErr != nil {
 			panic(fileErr)
 		}
@@ -51,13 +51,13 @@ func Execute(path string,
 
 		select {
 		case <-ctx.Done():
-			res = append(res, []string{inputFile, "TLE", "Tempo limite excedido"})
+			res = append(res, []string{inputFileName, "TLE", "Tempo limite excedido"})
 			return res
 		case err := <-errorOutput:
-			res = append(res, []string{inputFile, "RTE", err.Error()})
+			res = append(res, []string{inputFileName, "RTE", err.Error()})
 			return res
 		case out := <-output:
-			res = append(res, []string{inputFile, "OK", string(out)})
+			res = append(res, []string{inputFileName, "OK", string(out)})
 		}
 	}
 
