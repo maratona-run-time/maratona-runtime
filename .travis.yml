@@ -7,5 +7,5 @@ script:
   - go build .
   - diff -u <(echo -n) <(gofmt -d ./)
   - go test github.com/maratona-run-time/Maratona-Runtime/verdict -v
-  - go test github.com/maratona-run-time/Maratona-Runtime/compiler -v
-  - go test github.com/maratona-run-time/Maratona-Runtime/tests -v
+  - go test github.com/maratona-run-time/Maratona-Runtime/compiler/src -v
+  - go test github.com/maratona-run-time/Maratona-Runtime/comparator/src -v
