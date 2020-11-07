@@ -3,7 +3,6 @@ package verdict
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -13,25 +12,6 @@ import (
 )
 
 func Verdict(timeout float32, executablePath string, inputFilesFolder string, outputFilesFolder string, result chan<- string) {
-	var files [][2]string
-
-	root := inputFilesFolder
-	err := filepath.Walk(root, func(inputPath string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		basename := info.Name()
-		if filepath.Ext(basename) == ".in" {
-			testName := strings.TrimSuffix(basename, filepath.Ext(basename))
-			outputPath := filepath.Join(outputFilesFolder, testName+".out")
-			files = append(files, [2]string{inputPath, outputPath})
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	res := executor.Execute(executablePath, inputFilesFolder, timeout)
 
 	for _, executionResult := range res {
