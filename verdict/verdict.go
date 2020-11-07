@@ -4,36 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/maratona-run-time/Maratona-Runtime/comparator"
-	"github.com/maratona-run-time/Maratona-Runtime/executor"
+	"github.com/maratona-run-time/Maratona-Runtime/comparator/src"
+	"github.com/maratona-run-time/Maratona-Runtime/executor/src"
 )
-
-func runTest(timeout float32, executablePath string, inputFileName string, outputFileName string, result chan<- string) {
-	statusChan := make(chan []string)
-
-	go executor.Execute(executablePath, inputFileName, timeout, statusChan)
-
-	status := <-statusChan
-
-	switch status[0] {
-	case "TLE":
-		result <- "TLE"
-	case "RTE":
-		result <- "RTE"
-	case "OK":
-		expectedData, _ := ioutil.ReadFile(outputFileName)
-		expectedOutput := string(expectedData)
-		programOutput := status[1]
-		if comparator.Compare(expectedOutput, programOutput) {
-			result <- "AC"
-		} else {
-			result <- "WA"
-		}
-	}
-}
 
 func Verdict(timeout float32, executablePath string, inputFilesFolder string, outputFilesFolder string, result chan<- string) {
 	var files [][2]string
@@ -54,19 +31,32 @@ func Verdict(timeout float32, executablePath string, inputFilesFolder string, ou
 	if err != nil {
 		fmt.Println(err)
 	}
-	for _, testFiles := range files {
-		testResult := make(chan string)
-		go runTest(timeout, executablePath, testFiles[0], testFiles[1], testResult)
-		switch <-testResult {
+
+	res := executor.Execute(executablePath, inputFilesFolder, timeout)
+
+	for _, executionResult := range res {
+		_, fileName := path.Split(executionResult[0])
+		testResult := executionResult[1]
+		programOutput := executionResult[2]
+		switch testResult {
 		case "TLE":
 			result <- "TLE"
 			return
 		case "RTE":
 			result <- "RTE"
 			return
-		case "WA":
-			result <- "WA"
-			return
+		case "OK":
+			testName := strings.TrimSuffix(fileName, filepath.Ext(fileName))
+			outputFileName := filepath.Join(outputFilesFolder, testName+".out")
+			expectedData, err := ioutil.ReadFile(outputFileName)
+			if err != nil {
+				fmt.Println(err)
+			}
+			expectedOutput := string(expectedData)
+			if !comparator.Compare(expectedOutput, programOutput) {
+				result <- "WA"
+				return
+			}
 		}
 	}
 	result <- "AC"
