@@ -24,5 +24,13 @@ services:
       dockerfile: executor/Dockerfile
     networks:
       - maratona-net
+  verdict:
+    ports:
+      - "8083:8080"
+    build:
+      context: ./
+      dockerfile: verdict/Dockerfile
+    networks:
+      - maratona-net
 networks: 
   maratona-net:
