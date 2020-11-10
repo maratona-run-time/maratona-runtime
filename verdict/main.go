@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
@@ -65,7 +67,7 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	return binary, nil
 }
 
-func handleExecute(binary string, inputs []*multipart.FileHeader) ([]byte, error) {
+func handleExecute(binary string, inputs []*multipart.FileHeader) ([][]string, error) {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
@@ -100,16 +102,21 @@ func handleExecute(binary string, inputs []*multipart.FileHeader) ([]byte, error
 		return nil, err
 	}
 
-	result, err := ioutil.ReadAll(res.Body)
+	stringResult := new([][]string)
+	err = json.NewDecoder(res.Body).Decode(stringResult)
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return *stringResult, nil
+}
+
+func compare(expectedOutput string, programOutput string) bool {
+	return strings.EqualFold(programOutput, expectedOutput)
 }
 
 func main() {
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(VerdictForm{}), func(f VerdictForm) []byte {
+	m.Post("/", binding.MultipartForm(VerdictForm{}), func(f VerdictForm) string {
 		binary, compilerErr := handleCompiling(f.Language, f.Source)
 		if compilerErr != nil {
 			panic(compilerErr)
@@ -122,7 +129,23 @@ func main() {
 		if executorErr != nil {
 			panic(executorErr)
 		}
-		return result
+
+		for i, testExecution := range result {
+			if testExecution[1] != "OK" {
+				return testExecution[1] + " " + testExecution[0]
+			}
+
+			expectedOutputContent, err := f.Outputs[i].Open()
+			if err != nil {
+				panic(err)
+			}
+			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
+			expectedOutput := string(byteExpectedOutput)
+			if compare(testExecution[2], expectedOutput) == false {
+				return "WA" + " " + testExecution[0]
+			}
+		}
+		return "AC"
 	})
 	m.RunOnAddr(":8080")
 }
