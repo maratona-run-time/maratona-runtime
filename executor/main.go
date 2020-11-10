@@ -27,7 +27,7 @@ func main() {
 			panic(rErr)
 		}
 
-		binaryFile, bErr := os.Create("program.out")
+				binaryFile, bErr := os.Create("program.out")
 		if bErr != nil {
 			panic(bErr)
 		}
@@ -43,8 +43,8 @@ func main() {
 		receivedFile.Close()
 
 		os.Mkdir("inputs", 0700)
-		for i, file := range f.Inputs {
-			testFileName := fmt.Sprintf("inputs/%03d.in", i+1)
+		for _, file := range f.Inputs {
+			testFileName := fmt.Sprintf("inputs/%s", file.Filename)
 			testFile, testFileErr := os.Create(testFileName)
 			if testFileErr != nil {
 				panic(testFileErr)
