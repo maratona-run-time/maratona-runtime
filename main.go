@@ -5,7 +5,7 @@ import (
 	"os"
 
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
-	"github.com/maratona-run-time/Maratona-Runtime/verdict"
+	"github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 )
 
 func main() {
