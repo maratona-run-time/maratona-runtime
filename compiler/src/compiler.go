@@ -1,7 +1,7 @@
 package compiler
 
 import (
-	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -32,15 +32,14 @@ func Compile(compiler string) (string, error) {
 
 	// Adiciona o Shebang
 	if shebang, ok := shebangDict[compiler]; ok {
-		shebangScript := []string{"/bin/sh", "-c", fmt.Sprintf("echo \"%s\n$(cat program.out)\" > program.out", shebang)}
-
-		commands := shebangScript
-
-		_, execErr := exec.Command(commands[0], commands[1:]...).Output()
-
-		if execErr != nil {
-			log.Println("Erro na hora de adicionar o shebang\n", execErr)
-			return "", execErr
+		code, readErr := ioutil.ReadFile("program.out")
+		if readErr != nil {
+			log.Fatalln("Erro durante a leitura do arquivo na hora de adicionar Shebang\n", readErr)
+		}
+		executable := shebang + "\n" + string(code)
+		writeErr := ioutil.WriteFile("program.out", []byte(executable), 0755)
+		if writeErr != nil {
+			log.Fatalln("Erro durante a escrita do arquivo na hora de adicionar Shebang\n", writeErr)
 		}
 	}
 
