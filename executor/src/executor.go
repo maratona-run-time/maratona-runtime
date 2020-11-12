@@ -5,16 +5,63 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"time"
 )
 
-func Execute(ctx context.Context, path string, inputFileName string, output chan<- []byte, errorOutput chan<- error) {
-	inputFile, errInFile := os.Open(inputFileName)
-	if errInFile != nil {
-		fmt.Println(errInFile)
-		return
+func Execute(path string,
+	inputsFolder string,
+	timeout float32) [][]string {
+
+	var files []string
+
+	root := inputsFolder
+	err := filepath.Walk(root, func(inputPath string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		basename := info.Name()
+		if filepath.Ext(basename) == ".in" {
+			files = append(files, inputPath)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
 	}
-	executable := fmt.Sprintf("./%s", path)
-	go execute(ctx, executable, inputFile, output, errorOutput)
+
+	var res [][]string
+
+	for _, inputFileName := range files {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
+		defer cancel()
+
+		errorOutput := make(chan error)
+		output := make(chan []byte)
+
+		executable := fmt.Sprintf("./%s", path)
+
+		file, fileErr := os.Open(inputFileName)
+		if fileErr != nil {
+			panic(fileErr)
+		}
+		defer file.Close()
+
+		go execute(ctx, executable, file, output, errorOutput)
+
+		select {
+		case <-ctx.Done():
+			res = append(res, []string{inputFileName, "TLE", "Tempo limite excedido"})
+			return res
+		case err := <-errorOutput:
+			res = append(res, []string{inputFileName, "RTE", err.Error()})
+			return res
+		case out := <-output:
+			res = append(res, []string{inputFileName, "OK", string(out)})
+		}
+	}
+
+	return res
 }
 
 func execute(ctx context.Context, executable string, inputFile *os.File, output chan<- []byte, errorOutput chan<- error) {

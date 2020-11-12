@@ -7,9 +7,11 @@
 *.bat
 *.out
 
-# outputs and inputs
-*out.txt
-*in.txt
+# não ignorar outputs
+!**/outputs/*.out
+
+# logs
+*.log
 
 # logs
 *.log
@@ -26,3 +28,4 @@
 
 # hidden files
 .*
+!.travis.yml
