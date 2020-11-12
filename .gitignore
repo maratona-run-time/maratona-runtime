@@ -13,6 +13,9 @@
 # logs
 *.log
 
+# logs
+*.log
+
 # arquivos intermediarios
 *.o
 
