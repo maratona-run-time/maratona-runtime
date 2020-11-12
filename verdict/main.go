@@ -139,6 +139,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+			defer expectedOutputContent.Close()
 			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
 			expectedOutput := string(byteExpectedOutput)
 			if compare(testExecution[2], expectedOutput) == false {
