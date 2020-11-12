@@ -130,12 +130,20 @@ func main() {
 			panic(executorErr)
 		}
 
-		for i, testExecution := range result {
+		outputs := map[string]*multipart.FileHeader{}
+
+		for _, out := range f.Outputs {
+			outputName := out.Filename[:len(out.Filename)-len(".out")]
+			outputs[outputName] = out
+		}
+
+		for _, testExecution := range result {
 			if testExecution[1] != "OK" {
 				return testExecution[1] + " " + testExecution[0]
 			}
 
-			expectedOutputContent, err := f.Outputs[i].Open()
+			testName := testExecution[0][len("inputs/") : len(testExecution[0])-len(".in")]
+			expectedOutputContent, err := outputs[testName].Open()
 			if err != nil {
 				panic(err)
 			}
