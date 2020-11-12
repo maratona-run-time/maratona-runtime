@@ -1,7 +1,6 @@
 package verdict
 
 import (
-	"fmt"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -30,7 +29,7 @@ func Verdict(timeout float32, executablePath string, inputFilesFolder string, ou
 			outputFileName := filepath.Join(outputFilesFolder, testName+".out")
 			expectedData, err := ioutil.ReadFile(outputFileName)
 			if err != nil {
-				fmt.Println(err)
+				panic(err)
 			}
 			expectedOutput := string(expectedData)
 			if !comparator.Compare(expectedOutput, programOutput) {
