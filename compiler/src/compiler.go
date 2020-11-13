@@ -36,8 +36,8 @@ func Compile(compiler string) (string, error) {
 		if readErr != nil {
 			log.Fatalln("Erro durante a leitura do arquivo na hora de adicionar Shebang\n", readErr)
 		}
-		executable := shebang + "\n" + string(code)
-		writeErr := ioutil.WriteFile("program.out", []byte(executable), 0755)
+		executable := append([]byte(shebang+"\n"), code...)
+		writeErr := ioutil.WriteFile("program.out", executable, 0755)
 		if writeErr != nil {
 			log.Fatalln("Erro durante a escrita do arquivo na hora de adicionar Shebang\n", writeErr)
 		}
