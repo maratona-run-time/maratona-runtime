@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -148,8 +147,6 @@ func main() {
 		}
 
 		for _, testExecution := range result {
-			fmt.Println(testExecution.TestName + " " + testExecution.Status + " " + testExecution.ErrorMessage)
-			fmt.Println(testExecution)
 			if testExecution.Status != "OK" {
 				return testExecution.Status + " " + testExecution.TestName
 			}

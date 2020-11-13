@@ -6,17 +6,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/maratona-run-time/Maratona-Runtime/comparator/src"
-	"github.com/maratona-run-time/Maratona-Runtime/executor/src"
+	comparator "github.com/maratona-run-time/Maratona-Runtime/comparator/src"
+	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 )
 
 func Verdict(timeout float32, executablePath string, inputFilesFolder string, outputFilesFolder string, result chan<- string) {
 	res := executor.Execute(executablePath, inputFilesFolder, timeout)
 
 	for _, executionResult := range res {
-		_, fileName := path.Split(executionResult[0])
-		testResult := executionResult[1]
-		programOutput := executionResult[2]
+		_, fileName := path.Split(executionResult.TestName)
+		testResult := executionResult.Status
+		programOutput := executionResult.ErrorMessage
 		switch testResult {
 		case "TLE":
 			result <- "TLE"
