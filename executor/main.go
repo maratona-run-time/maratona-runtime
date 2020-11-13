@@ -60,7 +60,10 @@ func main() {
 		}
 
 		res := executor.Execute("program.out", "inputs", 2.)
-		jsonResult, _ := json.Marshal(res)
+		jsonResult, err := json.Marshal(res)
+		if err != nil {
+			panic(err)
+		}
 		return jsonResult
 	})
 	m.RunOnAddr(":8080")

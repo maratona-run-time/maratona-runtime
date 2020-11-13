@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -70,7 +71,13 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	return binary, nil
 }
 
-func handleExecute(binary string, inputs []*multipart.FileHeader) ([][]string, error) {
+type ExecutionResult struct {
+	TestName     string `json:"testName"`
+	Status       string `json:"status"`
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func handleExecute(binary string, inputs []*multipart.FileHeader) ([]ExecutionResult, error) {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
@@ -105,12 +112,12 @@ func handleExecute(binary string, inputs []*multipart.FileHeader) ([][]string, e
 		return nil, err
 	}
 
-	stringResult := new([][]string)
-	err = json.NewDecoder(res.Body).Decode(stringResult)
+	executionResult := new([]ExecutionResult)
+	err = json.NewDecoder(res.Body).Decode(executionResult)
 	if err != nil {
 		return nil, err
 	}
-	return *stringResult, nil
+	return *executionResult, nil
 }
 
 func compare(expectedOutput string, programOutput string) bool {
@@ -141,11 +148,13 @@ func main() {
 		}
 
 		for _, testExecution := range result {
-			if testExecution[1] != "OK" {
-				return testExecution[1] + " " + testExecution[0]
+			fmt.Println(testExecution.TestName + " " + testExecution.Status + " " + testExecution.ErrorMessage)
+			fmt.Println(testExecution)
+			if testExecution.Status != "OK" {
+				return testExecution.Status + " " + testExecution.TestName
 			}
 
-			testName := testExecution[0][len("inputs/") : len(testExecution[0])-len(".in")]
+			testName := testExecution.TestName[len("inputs/") : len(testExecution.TestName)-len(".in")]
 			expectedOutputContent, err := outputs[testName].Open()
 			if err != nil {
 				panic(err)
@@ -153,8 +162,8 @@ func main() {
 			defer expectedOutputContent.Close()
 			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
 			expectedOutput := string(byteExpectedOutput)
-			if compare(testExecution[2], expectedOutput) == false {
-				return "WA" + " " + testExecution[0]
+			if compare(testExecution.ErrorMessage, expectedOutput) == false {
+				return "WA" + " " + testExecution.TestName
 			}
 		}
 		return "AC"
