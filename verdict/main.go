@@ -26,7 +26,10 @@ func createFileField(writer *multipart.Writer, fieldName string, file *multipart
 	if err != nil {
 		return err
 	}
-	content, _ := file.Open()
+	content, err := file.Open()
+	if err != nil {
+		return err
+	}
 	io.Copy(field, content)
 	defer content.Close()
 	return nil
