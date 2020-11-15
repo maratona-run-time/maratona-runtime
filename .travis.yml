@@ -5,4 +5,4 @@ go:
 
 script:
   - diff -u <(echo -n) <(gofmt -d ./)
-  - go ./... -cover -v
+  - go test ./... -cover -v
