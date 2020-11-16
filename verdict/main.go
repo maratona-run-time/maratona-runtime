@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-martini/martini"
+	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/martini-contrib/binding"
 )
 
@@ -70,13 +71,7 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	return binary, nil
 }
 
-type ExecutionResult struct {
-	TestName string `json:"testName"`
-	Status   string `json:"status"`
-	Message  string `json:"message"`
-}
-
-func handleExecute(binary string, inputs []*multipart.FileHeader) ([]ExecutionResult, error) {
+func handleExecute(binary string, inputs []*multipart.FileHeader) ([]model.ExecutionResult, error) {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
@@ -111,7 +106,7 @@ func handleExecute(binary string, inputs []*multipart.FileHeader) ([]ExecutionRe
 		return nil, err
 	}
 
-	executionResult := new([]ExecutionResult)
+	executionResult := new([]model.ExecutionResult)
 	err = json.NewDecoder(res.Body).Decode(executionResult)
 	if err != nil {
 		return nil, err
