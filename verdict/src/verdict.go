@@ -16,7 +16,7 @@ func Verdict(timeout float32, executablePath string, inputFilesFolder string, ou
 	for _, executionResult := range res {
 		_, fileName := path.Split(executionResult.TestName)
 		testResult := executionResult.Status
-		programOutput := executionResult.ErrorMessage
+		programOutput := executionResult.Message
 		switch testResult {
 		case "TLE":
 			result <- "TLE"

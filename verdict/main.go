@@ -71,9 +71,9 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 }
 
 type ExecutionResult struct {
-	TestName     string `json:"testName"`
-	Status       string `json:"status"`
-	ErrorMessage string `json:"errorMessage"`
+	TestName string `json:"testName"`
+	Status   string `json:"status"`
+	Message  string `json:"message"`
 }
 
 func handleExecute(binary string, inputs []*multipart.FileHeader) ([]ExecutionResult, error) {
@@ -159,7 +159,7 @@ func main() {
 			defer expectedOutputContent.Close()
 			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
 			expectedOutput := string(byteExpectedOutput)
-			if compare(testExecution.ErrorMessage, expectedOutput) == false {
+			if compare(testExecution.Message, expectedOutput) == false {
 				return "WA" + " " + testExecution.TestName
 			}
 		}
