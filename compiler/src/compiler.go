@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,7 +24,11 @@ func Compile(compiler string) (string, error) {
 	logFile, _ := os.OpenFile("error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	defer logFile.Close()
 	log.SetOutput(logFile)
-	commands := compilationCommand[compiler]
+	commands, compilerSupported := compilationCommand[compiler]
+	if compilerSupported == false {
+		log.Println("Linguagem de programação escolhida não suportada")
+		return "", fmt.Errorf("Language '" + compiler + "' required for compilation not supported")
+	}
 	_, execErr := exec.Command(commands[0], commands[1:]...).Output()
 	if execErr != nil {
 		log.Println("Erro na compilação\n", execErr)

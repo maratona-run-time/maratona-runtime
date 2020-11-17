@@ -120,18 +120,24 @@ func compare(expectedOutput string, programOutput string) bool {
 
 func main() {
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(VerdictForm{}), func(f VerdictForm) string {
+	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, f VerdictForm) string {
 		binary, compilerErr := handleCompiling(f.Language, f.Source)
 		if compilerErr != nil {
-			panic(compilerErr)
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'\n"))
+			return "Failed judgment"
 		}
 		writeErr := ioutil.WriteFile("binary", binary, 0777)
 		if writeErr != nil {
-			panic(writeErr)
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'\n"))
+			return "Failed judgment"
 		}
 		result, executorErr := handleExecute("binary", f.Inputs)
 		if executorErr != nil {
-			panic(executorErr)
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to execute the program with the received input files\n"))
+			return "Failed judgment"
 		}
 
 		outputs := map[string]*multipart.FileHeader{}
@@ -149,7 +155,9 @@ func main() {
 			testName := testExecution.TestName[len("inputs/") : len(testExecution.TestName)-len(".in")]
 			expectedOutputContent, err := outputs[testName].Open()
 			if err != nil {
-				panic(err)
+				rs.WriteHeader(http.StatusBadRequest)
+				rs.Write([]byte("An error occurred while trying to open the output file named '" + testName + "'\n"))
+				return "Failed judgment"
 			}
 			defer expectedOutputContent.Close()
 			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)

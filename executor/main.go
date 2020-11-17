@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 
 	"github.com/go-martini/martini"
@@ -21,23 +22,35 @@ type FileForm struct {
 
 func main() {
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(FileForm{}), func(f FileForm) []byte {
+	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, f FileForm) []byte {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
-			panic(rErr)
+			rs.WriteHeader(http.StatusBadRequest)
+			rs.Write([]byte("An error occurred while trying to open the binary file named '" + f.Binary.Filename + "'"))
+			return nil
 		}
 
 		binaryFile, bErr := os.Create("program.out")
 		if bErr != nil {
-			panic(bErr)
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to create a local empty file"))
+			return nil
 		}
 
 		exeErr := os.Chmod("program.out", 0777)
 		if exeErr != nil {
-			panic(exeErr)
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to give execution permission to a local empty file"))
+			return nil
 		}
 
-		io.Copy(binaryFile, receivedFile)
+		_, copyErr := io.Copy(binaryFile, receivedFile)
+
+		if copyErr != nil {
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to copy the received binary to a local file"))
+			return nil
+		}
 
 		binaryFile.Close()
 		receivedFile.Close()
@@ -45,24 +58,40 @@ func main() {
 		os.Mkdir("inputs", 0700)
 
 		for _, file := range f.Inputs {
+			if file == nil {
+				rs.WriteHeader(http.StatusBadRequest)
+				rs.Write([]byte("Received nil input file on the executor"))
+				return nil
+			}
 			testFileName := fmt.Sprintf("inputs/%s", file.Filename)
 			testFile, testFileErr := os.Create(testFileName)
 			if testFileErr != nil {
-				panic(testFileErr)
+				rs.WriteHeader(http.StatusBadRequest)
+				rs.Write([]byte("An error occurred while trying to create a local file named '" + file.Filename + "' on 'inputs/' folder"))
+				return nil
 			}
 			defer testFile.Close()
 			receivedTestFile, rfErr := file.Open()
 			if rfErr != nil {
-				panic(rfErr)
+				rs.WriteHeader(http.StatusBadRequest)
+				rs.Write([]byte("An error occurred while trying to open the received test file named '" + file.Filename + "'"))
+				return nil
 			}
 			defer receivedTestFile.Close()
-			io.Copy(testFile, receivedTestFile)
+			_, copyErr := io.Copy(testFile, receivedTestFile)
+			if copyErr != nil {
+				rs.WriteHeader(http.StatusInternalServerError)
+				rs.Write([]byte("An error occurred while trying to copy the received test to a local file named '" + file.Filename + "' on 'inputs/' folder"))
+				return nil
+			}
 		}
 
 		res := executor.Execute("program.out", "inputs", 2.)
-		jsonResult, err := json.Marshal(res)
-		if err != nil {
-			panic(err)
+		jsonResult, convertErr := json.Marshal(res)
+		if convertErr != nil {
+			rs.WriteHeader(http.StatusInternalServerError)
+			rs.Write([]byte("An error occurred while trying to convert the execution result into a json format"))
+			return nil
 		}
 		return jsonResult
 	})

@@ -23,18 +23,24 @@ func main() {
 		fileName := req.Program.Filename
 		f, createErr := os.Create(fileName)
 		if createErr != nil {
-			panic(createErr)
+			rs.WriteHeader(http.StatusBadRequest)
+			rs.Write([]byte("An error occurred while trying to create a file named '" + fileName + "'"))
+			return
 		}
 		program, pErr := req.Program.Open()
 		if pErr != nil {
-			panic(pErr)
+			rs.WriteHeader(http.StatusBadRequest)
+			rs.Write([]byte("An error occurred while trying to open the received program"))
+			return
 		}
 		io.Copy(f, program)
 		f.Close()
 		program.Close()
 		ret, compilerErr := compiler.Compile(req.Language)
 		if compilerErr != nil {
-			panic(compilerErr)
+			rs.WriteHeader(http.StatusBadRequest)
+			rs.Write([]byte("An error occurred while trying compile program in language '" + req.Language + "'"))
+			return
 		}
 		http.ServeFile(rs, rq, ret)
 	})
