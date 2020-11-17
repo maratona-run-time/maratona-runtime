@@ -12,6 +12,7 @@ import (
 	"github.com/martini-contrib/binding"
 
 	"os"
+	"log"
 )
 
 type FileForm struct {
@@ -28,6 +29,7 @@ var sourceFileName = map[string]string{
 }
 
 func main() {
+	logger := log.New(os.Stderr, "[MaRT] ", log.Ldate|log.Ltime|log.Llongfile)
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
 		fileName := sourceFileName[req.Language]
@@ -46,7 +48,7 @@ func main() {
 		io.Copy(f, program)
 		f.Close()
 		program.Close()
-		ret, compilerErr := compiler.Compile(req.Language, fileName)
+		ret, compilerErr := compiler.Compile(req.Language, fileName, logger)
 		if compilerErr != nil {
 			msg := "An error occurred while trying compile program in language '" + req.Language + "'"
 			errors.WriteResponse(rs, http.StatusBadRequest, msg, compilerErr)

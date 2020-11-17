@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 )
 
-func Compile(compiler string, fileName string) (string, error) {
+func Compile(compiler string, fileName string, logger *log.Logger) (string, error) {
 	compilationCommand := map[string][]string{
 		"C":      {"gcc", fileName, "-o", "program.out"},
 		"C++":    {"g++", fileName, "-o", "program.out"},
@@ -31,7 +30,7 @@ func Compile(compiler string, fileName string) (string, error) {
 	}
 	_, execErr := exec.Command(commands[0], commands[1:]...).Output()
 	if execErr != nil {
-		log.Println("Erro na compilação\n", execErr)
+		logger.Println("ERROR: Erro na compilação\n", execErr)
 		return "", execErr
 	}
 
@@ -39,14 +38,18 @@ func Compile(compiler string, fileName string) (string, error) {
 	if shebang, ok := shebangDict[compiler]; ok {
 		code, readErr := ioutil.ReadFile("program.out")
 		if readErr != nil {
-			log.Fatalln("Erro durante a leitura do arquivo na hora de adicionar Shebang\n", readErr)
+			logger.Println("ERROR: Erro durante a leitura do arquivo na hora de adicionar Shebang\n", readErr)
+			return "", readErr
 		}
 		executable := append([]byte(shebang+"\n"), code...)
 		writeErr := ioutil.WriteFile("program.out", executable, 0755)
 		if writeErr != nil {
-			log.Fatalln("Erro durante a escrita do arquivo na hora de adicionar Shebang\n", writeErr)
+			logger.Println("ERROR: Erro durante a escrita do arquivo na hora de adicionar Shebang\n", writeErr)
+			return "", writeErr
 		}
 	}
+
+	logger.Println("DEBUG: Compilation Finished")
 
 	return "program.out", nil
 }
