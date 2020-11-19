@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -14,6 +15,8 @@ import (
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/martini-contrib/binding"
 )
+
+var compilationError = errors.New("Compilation Error")
 
 type VerdictForm struct {
 	Language string                  `form:"language"`
@@ -57,11 +60,16 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, compilationError
 	}
 
 	binary, err := ioutil.ReadAll(res.Body)
@@ -122,6 +130,10 @@ func main() {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, f VerdictForm) string {
 		binary, compilerErr := handleCompiling(f.Language, f.Source)
+		if errors.Is(compilerErr, compilationError) {
+			rs.WriteHeader(http.StatusOK)
+			return "CE" // Compilation Error
+		}
 		if compilerErr != nil {
 			rs.WriteHeader(http.StatusInternalServerError)
 			rs.Write([]byte("An error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'\n"))
