@@ -8,13 +8,13 @@ import (
 	"os/exec"
 )
 
-func Compile(compiler string) (string, error) {
+func Compile(compiler string, fileName string) (string, error) {
 	compilationCommand := map[string][]string{
-		"C":      {"gcc", "program.c", "-o", "program.out"},
-		"C++":    {"g++", "program.cpp", "-o", "program.out"},
-		"C++11":  {"g++", "program.cpp", "-std=c++11", "-o", "program.out"},
-		"Python": {"cp", "program.py", "program.out"},
-		"Go":     {"go", "build", "-o", "program.out", "program.go"},
+		"C":      {"gcc", fileName, "-o", "program.out"},
+		"C++":    {"g++", fileName, "-o", "program.out"},
+		"C++11":  {"g++", fileName, "-std=c++11", "-o", "program.out"},
+		"Python": {"cp", fileName, "program.out"},
+		"Go":     {"go", "build", "-o", "program.out", fileName},
 	}
 
 	shebangDict := map[string]string{
