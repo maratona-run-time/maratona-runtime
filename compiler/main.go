@@ -17,10 +17,18 @@ type FileForm struct {
 	Program  *multipart.FileHeader `form:"program"`
 }
 
+var sourceFileName = map[string]string{
+	"C":      "program.c",
+	"C++":    "program.cpp",
+	"C++11":  "program.cpp",
+	"Python": "program.py",
+	"Go":     "program.go",
+}
+
 func main() {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
-		fileName := req.Program.Filename
+		fileName := sourceFileName[req.Language]
 		f, createErr := os.Create(fileName)
 		if createErr != nil {
 			rs.WriteHeader(http.StatusBadRequest)
