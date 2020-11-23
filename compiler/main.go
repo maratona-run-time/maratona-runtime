@@ -5,6 +5,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/maratona-run-time/Maratona-Runtime/errors"
+
 	"github.com/go-martini/martini"
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/martini-contrib/binding"
@@ -31,14 +33,14 @@ func main() {
 		fileName := sourceFileName[req.Language]
 		f, createErr := os.Create(fileName)
 		if createErr != nil {
-			rs.WriteHeader(http.StatusBadRequest)
-			rs.Write([]byte("An error occurred while trying to create a file named '" + fileName + "'"))
+			msg := "An error occurred while trying to create a file named '" + fileName + "'"
+			errors.WriteResponse(rs, http.StatusBadRequest, msg, createErr)
 			return
 		}
 		program, pErr := req.Program.Open()
 		if pErr != nil {
-			rs.WriteHeader(http.StatusBadRequest)
-			rs.Write([]byte("An error occurred while trying to open the received program"))
+			msg := "An error occurred while trying to open the received program"
+			errors.WriteResponse(rs, http.StatusBadRequest, msg, pErr)
 			return
 		}
 		io.Copy(f, program)
@@ -46,8 +48,8 @@ func main() {
 		program.Close()
 		ret, compilerErr := compiler.Compile(req.Language, fileName)
 		if compilerErr != nil {
-			rs.WriteHeader(http.StatusBadRequest)
-			rs.Write([]byte("An error occurred while trying compile program in language '" + req.Language + "'"))
+			msg := "An error occurred while trying compile program in language '" + req.Language + "'"
+			errors.WriteResponse(rs, http.StatusBadRequest, msg, compilerErr)
 			return
 		}
 		http.ServeFile(rs, rq, ret)

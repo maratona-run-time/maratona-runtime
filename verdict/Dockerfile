@@ -4,5 +4,6 @@ WORKDIR /go/src/app
 COPY go.sum go.mod ./
 RUN go mod download
 COPY model/ model/
+COPY errors/ errors/
 COPY verdict/ verdict/
 CMD ["go", "run", "verdict/main.go"]

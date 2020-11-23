@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/go-martini/martini"
+	httpErrors "github.com/maratona-run-time/Maratona-Runtime/errors"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/martini-contrib/binding"
 )
@@ -135,21 +136,21 @@ func main() {
 			return "CE" // Compilation Error
 		}
 		if compilerErr != nil {
-			rs.WriteHeader(http.StatusInternalServerError)
-			rs.Write([]byte("An error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'\n"))
-			return "Failed judgment"
+			msg := "Failed Judgment\nAn error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'"
+			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, compilerErr)
+			return ""
 		}
 		writeErr := ioutil.WriteFile("binary", binary, 0777)
 		if writeErr != nil {
-			rs.WriteHeader(http.StatusInternalServerError)
-			rs.Write([]byte("An error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'\n"))
-			return "Failed judgment"
+			msg := "Failed judgment\nAn error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'"
+			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
+			return ""
 		}
 		result, executorErr := handleExecute("binary", f.Inputs)
 		if executorErr != nil {
-			rs.WriteHeader(http.StatusInternalServerError)
-			rs.Write([]byte("An error occurred while trying to execute the program with the received input files\n"))
-			return "Failed judgment"
+			msg := "Failed judgment\nAn error occurred while trying to execute the program with the received input files"
+			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, executorErr)
+			return ""
 		}
 
 		outputs := map[string]*multipart.FileHeader{}
@@ -167,9 +168,9 @@ func main() {
 			testName := testExecution.TestName[len("inputs/") : len(testExecution.TestName)-len(".in")]
 			expectedOutputContent, err := outputs[testName].Open()
 			if err != nil {
-				rs.WriteHeader(http.StatusBadRequest)
-				rs.Write([]byte("An error occurred while trying to open the output file named '" + testName + "'\n"))
-				return "Failed judgment"
+				msg := "Failed judgment\nAn error occurred while trying to open the output file named '" + testName + "'"
+				httpErrors.WriteResponse(rs, http.StatusBadRequest, msg, err)
+				return ""
 			}
 			defer expectedOutputContent.Close()
 			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
