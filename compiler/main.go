@@ -32,7 +32,7 @@ func main() {
 		io.Copy(f, program)
 		f.Close()
 		program.Close()
-		ret, compilerErr := compiler.Compile(req.Language)
+		ret, compilerErr := compiler.Compile(req.Language, fileName)
 		if compilerErr != nil {
 			panic(compilerErr)
 		}

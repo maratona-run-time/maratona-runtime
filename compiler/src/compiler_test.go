@@ -27,7 +27,7 @@ func TestCompilation(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s/%s", test.lang, test.file), func(t *testing.T) {
 			setup(test.lang, test.file)
-			_, err := Compile(test.lang)
+			_, err := Compile(test.lang, test.file)
 			if err != nil {
 				t.Errorf("Compilation failed!")
 			}

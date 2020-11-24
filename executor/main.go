@@ -43,8 +43,9 @@ func main() {
 		receivedFile.Close()
 
 		os.Mkdir("inputs", 0700)
-		for i, file := range f.Inputs {
-			testFileName := fmt.Sprintf("inputs/%03d.in", i+1)
+
+		for _, file := range f.Inputs {
+			testFileName := fmt.Sprintf("inputs/%s", file.Filename)
 			testFile, testFileErr := os.Create(testFileName)
 			if testFileErr != nil {
 				panic(testFileErr)
@@ -59,7 +60,10 @@ func main() {
 		}
 
 		res := executor.Execute("program.out", "inputs", 2.)
-		jsonResult, _ := json.Marshal(res)
+		jsonResult, err := json.Marshal(res)
+		if err != nil {
+			panic(err)
+		}
 		return jsonResult
 	})
 	m.RunOnAddr(":8080")

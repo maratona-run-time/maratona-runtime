@@ -7,11 +7,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	model "github.com/maratona-run-time/Maratona-Runtime/model"
 )
 
 func Execute(path string,
 	inputsFolder string,
-	timeout float32) [][]string {
+	timeout float32) []model.ExecutionResult {
 
 	var files []string
 
@@ -30,7 +32,7 @@ func Execute(path string,
 		fmt.Println(err)
 	}
 
-	var res [][]string
+	var res []model.ExecutionResult
 
 	for _, inputFileName := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
@@ -51,13 +53,13 @@ func Execute(path string,
 
 		select {
 		case <-ctx.Done():
-			res = append(res, []string{inputFileName, "TLE", "Tempo limite excedido"})
+			res = append(res, model.ExecutionResult{inputFileName, "TLE", "Tempo limite excedido"})
 			return res
 		case err := <-errorOutput:
-			res = append(res, []string{inputFileName, "RTE", err.Error()})
+			res = append(res, model.ExecutionResult{inputFileName, "RTE", err.Error()})
 			return res
 		case out := <-output:
-			res = append(res, []string{inputFileName, "OK", string(out)})
+			res = append(res, model.ExecutionResult{inputFileName, "OK", string(out)})
 		}
 	}
 

@@ -5,13 +5,14 @@ import (
 	"os"
 
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
-	"github.com/maratona-run-time/Maratona-Runtime/verdict"
+	"github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 )
 
 func main() {
 	language := "C"
 	inputFileName := "in"
 	outputFileName := "out"
+	sourceFileName := "program.c"
 	if len(os.Args[1:]) > 0 {
 		language = os.Args[1]
 	}
@@ -21,7 +22,10 @@ func main() {
 	if len(os.Args[3:]) > 0 {
 		outputFileName = os.Args[3]
 	}
-	path, errCompiler := compiler.Compile(language)
+	if len(os.Args[4:]) > 0 {
+		sourceFileName = os.Args[4]
+	}
+	path, errCompiler := compiler.Compile(language, sourceFileName)
 	if errCompiler != nil {
 		fmt.Println("compiler error:", errCompiler)
 		return
