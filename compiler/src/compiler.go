@@ -3,11 +3,11 @@ package compiler
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
+	"github.com/rs/zerolog"
 	"os/exec"
 )
 
-func Compile(compiler string, fileName string, logger *log.Logger) (string, error) {
+func Compile(compiler string, fileName string, logger zerolog.Logger) (string, error) {
 	compilationCommand := map[string][]string{
 		"C":      {"gcc", fileName, "-o", "program.out"},
 		"C++":    {"g++", fileName, "-o", "program.out"},
@@ -20,17 +20,18 @@ func Compile(compiler string, fileName string, logger *log.Logger) (string, erro
 		"Python": "#!/usr/bin/env python3",
 	}
 
-	logFile, _ := os.OpenFile("error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
-	defer logFile.Close()
-	log.SetOutput(logFile)
 	commands, compilerSupported := compilationCommand[compiler]
 	if compilerSupported == false {
-		log.Println("Linguagem de programação escolhida não suportada")
+		logger.Info().
+			   Msg("Linguagem de programação escolhida não suportada")
 		return "", fmt.Errorf("Language '" + compiler + "' required for compilation not supported")
 	}
 	_, execErr := exec.Command(commands[0], commands[1:]...).Output()
 	if execErr != nil {
-		logger.Println("ERROR: Erro na compilação\n", execErr)
+		logger.Warn().
+			   Err(execErr).
+			   Msg("Erro na compilação\n")
+			   
 		return "", execErr
 	}
 
@@ -38,18 +39,24 @@ func Compile(compiler string, fileName string, logger *log.Logger) (string, erro
 	if shebang, ok := shebangDict[compiler]; ok {
 		code, readErr := ioutil.ReadFile("program.out")
 		if readErr != nil {
-			logger.Println("ERROR: Erro durante a leitura do arquivo na hora de adicionar Shebang\n", readErr)
+			logger.Error().
+				   Err(readErr).
+				   Msg("Erro durante a leitura do arquivo na hora de adicionar Shebang\n")
+				   
 			return "", readErr
 		}
 		executable := append([]byte(shebang+"\n"), code...)
 		writeErr := ioutil.WriteFile("program.out", executable, 0755)
 		if writeErr != nil {
-			logger.Println("ERROR: Erro durante a escrita do arquivo na hora de adicionar Shebang\n", writeErr)
+			logger.Error().
+				   Err(writeErr).
+				   Msg("Erro durante a escrita do arquivo na hora de adicionar Shebang\n")
 			return "", writeErr
 		}
 	}
 
-	logger.Println("DEBUG: Compilation Finished")
+	logger.Debug().
+		   Msg("Compilation Finished")
 
 	return "program.out", nil
 }
