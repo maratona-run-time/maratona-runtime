@@ -32,5 +32,17 @@ services:
       dockerfile: verdict/Dockerfile
     networks:
       - maratona-net
+  postgres:
+    ports:
+      - "5432:5432"
+    image: "postgres:alpine"
+    environment:
+        POSTGRES_PASSWORD: password
+        POSTGRES_USER: postgres
+        POSTGRES_DB: mart
+    volumes:
+      - postgres:/var/lib/postgresql/data 
 networks: 
-  maratona-net:
+  maratona-net: 
+volumes:
+  postgres:
