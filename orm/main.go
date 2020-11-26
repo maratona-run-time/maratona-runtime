@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"sync"
 )
 
 type Challenge struct {
@@ -13,19 +14,23 @@ type Challenge struct {
 	MemoryLimit int
 }
 
-func dbConnect() *gorm.DB {
-	host := "localhost"
-	port := "5432"
-	user := "postgres"
-	dbname := "mart"
-	password := "password"
+var db *gorm.DB = nil
+var once sync.Once
 
-	dsn := fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=disable", host, port, user, dbname, password)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Failed to connect database")
-	}
+func dbConnect() *gorm.DB {
+	once.Do(func() {
+		host := "localhost"
+		port := "5432"
+		user := "postgres"
+		dbname := "mart"
+		password := "password"
+		dsn := fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=disable", host, port, user, dbname, password)
+		var err error
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err != nil {
+			panic(err)
+		}
+	})
 	return db
 }
 
