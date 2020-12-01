@@ -134,10 +134,15 @@ func main() {
 		if convertErr != nil {
 			msg := "An error occurred while trying to convert the execution result into a json format"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, convertErr)
+			logger.Error().
+					Err(convertErr).
+					Msg(msg)
 			return nil
+		}
 		jsonResult, err := json.Marshal(res)
 		if err != nil {
-			logger.Panicln(err)
+			logger.Panic().
+					Err(err)
 		}
 		return jsonResult
 	})

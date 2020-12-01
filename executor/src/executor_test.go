@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"os"
 )
 
