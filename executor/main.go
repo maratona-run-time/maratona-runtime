@@ -13,6 +13,8 @@ import (
 	"github.com/go-martini/martini"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 	"github.com/martini-contrib/binding"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // FileForm define o tipo de dados esperado no POST.
@@ -23,12 +25,32 @@ type FileForm struct {
 }
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
+	logFile, logErr := os.OpenFile("executor.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	defer logFile.Close()
+	if logErr != nil {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		log.Fatal().Err(logErr).Msg("Could not create log file")
+	}
+	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
+	logger := zerolog.
+					New(multi).
+					With().
+					Timestamp().
+					Str("MaRT", "executor").
+					Logger().
+					Level(zerolog.DebugLevel)
+
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, f FileForm) []byte {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
 			msg := "An error occurred while trying to open the binary file named '" + f.Binary.Filename + "'"
 			errors.WriteResponse(rs, http.StatusBadRequest, msg, rErr)
+			logger.Error().
+					Err(rErr).
+					Msg(msg)
 			return nil
 		}
 
@@ -36,6 +58,9 @@ func main() {
 		if bErr != nil {
 			msg := "An error occurred while trying to create a local empty file"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, bErr)
+			logger.Error().
+					Err(bErr).
+					Msg(msg)
 			return nil
 		}
 
@@ -43,6 +68,9 @@ func main() {
 		if exeErr != nil {
 			msg := "An error occurred while trying to give execution permission to a local empty file"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, exeErr)
+			logger.Error().
+					Err(exeErr).
+					Msg(msg)
 			return nil
 		}
 
@@ -50,6 +78,9 @@ func main() {
 		if copyErr != nil {
 			msg := "An error occurred while trying to copy the received binary to a local file"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
+			logger.Error().
+					Err(copyErr).
+					Msg(msg)
 			return nil
 		}
 
@@ -62,6 +93,8 @@ func main() {
 			if file == nil {
 				msg := "Received nil input file on the executor"
 				errors.WriteResponse(rs, http.StatusBadRequest, msg, nil)
+				logger.Error().
+					Msg(msg)
 				return nil
 			}
 			testFileName := fmt.Sprintf("inputs/%s", file.Filename)
@@ -69,6 +102,9 @@ func main() {
 			if testFileErr != nil {
 				msg := "An error occurred while trying to create a local file named '" + file.Filename + "' on 'inputs/' folder"
 				errors.WriteResponse(rs, http.StatusBadRequest, msg, testFileErr)
+				logger.Error().
+					Err(testFileErr).
+					Msg(msg)
 				return nil
 			}
 			defer testFile.Close()
@@ -76,6 +112,9 @@ func main() {
 			if rfErr != nil {
 				msg := "An error occurred while trying to open the received test file named '" + file.Filename + "'"
 				errors.WriteResponse(rs, http.StatusBadRequest, msg, rfErr)
+				logger.Error().
+					Err(rfErr).
+					Msg(msg)
 				return nil
 			}
 			defer receivedTestFile.Close()
@@ -83,16 +122,22 @@ func main() {
 			if copyErr != nil {
 				msg := "An error occurred while trying to copy the received test to a local file named '" + file.Filename + "' on 'inputs/' folder"
 				errors.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
+				logger.Error().
+					Err(copyErr).
+					Msg(msg)
 				return nil
 			}
 		}
 
-		res := executor.Execute("program.out", "inputs", 2.)
+		res := executor.Execute("program.out", "inputs", 2., logger)
 		jsonResult, convertErr := json.Marshal(res)
 		if convertErr != nil {
 			msg := "An error occurred while trying to convert the execution result into a json format"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, convertErr)
 			return nil
+		jsonResult, err := json.Marshal(res)
+		if err != nil {
+			logger.Panicln(err)
 		}
 		return jsonResult
 	})
