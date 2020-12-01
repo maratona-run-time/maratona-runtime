@@ -13,6 +13,7 @@ import (
 	"github.com/go-martini/martini"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 	"github.com/martini-contrib/binding"
+	
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
