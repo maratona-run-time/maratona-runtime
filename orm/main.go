@@ -1,76 +1,56 @@
 package main
 
 import (
-	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"sync"
+	"encoding/json"
+	"mime/multipart"
+	"net/http"
+	"strconv"
+
+	"github.com/go-martini/martini"
+	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
+	"github.com/martini-contrib/binding"
 )
 
-type Challenge struct {
-	gorm.Model
-	Title       string
-	TimeLimit   int
-	MemoryLimit int
+type SubmissionForm struct {
+	Language  string                `form:"language"`
+	Source    *multipart.FileHeader `form:"source"`
+	ProblemId int                   `form:"problemId"`
 }
 
-var db *gorm.DB = nil
-var once sync.Once
+type ChallengeForm struct {
+	Title       string `form:"title"`
+	TimeLimit   int    `form:"timeLimit"`
+	MemoryLimit int    `form:"memoryLimit"`
+	//SolutionBinary // Lang
+	//ComparatorBinary
+	//Inputs      []*multipart.FileHeader `form:"inputs"`
+	//Outputs     []*multipart.FileHeader `form:"outputs"`
+}
 
-func dbConnect() *gorm.DB {
-	once.Do(func() {
-		host := "localhost"
-		port := "5432"
-		user := "postgres"
-		dbname := "mart"
-		password := "password"
-		dsn := fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=disable", host, port, user, dbname, password)
-		var err error
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic(err)
-		}
+func createOrmServer() *martini.ClassicMartini {
+	m := martini.Classic()
+
+	m.Get("/challenge/:id", func(params martini.Params) []byte {
+		id := params["id"]
+		c := orm.FindChallenge(id)
+		jsonChallenge, _ := json.Marshal(c)
+		return jsonChallenge
 	})
-	return db
-}
 
-func initialMigration() {
-	db := dbConnect()
-	db.AutoMigrate(&Challenge{})
-}
+	m.Post("/challenge", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm) string {
+		challenge := orm.Challenge{Title: f.Title, TimeLimit: f.TimeLimit, MemoryLimit: f.MemoryLimit}
+		orm.CreateChallenge(&challenge)
+		return strconv.Itoa(int(challenge.ID))
+	})
 
-func createChallenge(c *Challenge) {
-	db := dbConnect()
-	db.Create(c)
-}
+	m.Get("/test", func() {
+		orm.Test()
+	})
 
-func readFirstChallenge(c *Challenge) {
-	db := dbConnect()
-	db.First(c)
-}
-
-func deleteChallenge(title string) {
-	db := dbConnect()
-	var c Challenge
-	db.Delete(&c, "Title = ?", title)
-}
-
-func readAllChallenges(challenges *[]Challenge) {
-	db := dbConnect()
-	db.Find(challenges)
-}
-
-func test() {
-	createChallenge(&Challenge{Title: "Teste"})
-	deleteChallenge("Teste")
-	var all []Challenge
-	readAllChallenges(&all)
-	for _, challenge := range all {
-		fmt.Println(challenge.Title)
-	}
+	return m
 }
 
 func main() {
-	initialMigration()
-	test()
+	m := createOrmServer()
+	m.RunOnAddr(":8085")
 }
