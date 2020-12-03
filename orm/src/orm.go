@@ -12,6 +12,14 @@ type Challenge struct {
 	Title       string
 	TimeLimit   int
 	MemoryLimit int
+	Inputs      []Input `gorm:"ForeignKey:ChallengeID"`
+}
+
+type Input struct {
+	gorm.Model
+	Filename    string
+	Content     []byte
+	ChallengeID uint
 }
 
 var db *gorm.DB = nil
@@ -19,60 +27,41 @@ var once sync.Once
 
 func dbConnect() *gorm.DB {
 	once.Do(func() {
-		host := "localhost"
+		host := "postgres"
 		port := "5432"
 		user := "postgres"
 		dbname := "mart"
 		password := "password"
 		dsn := fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=disable", host, port, user, dbname, password)
 		var err error
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		if err != nil {
+		if db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}); err != nil {
+			panic(err)
+		}
+		if err = db.AutoMigrate(&Input{}); err != nil {
+			panic(err)
+		}
+		if err = db.AutoMigrate(&Challenge{}); err != nil {
 			panic(err)
 		}
 	})
 	return db
 }
 
-func initialMigration() {
+func CreateChallenge(challenge *Challenge) error {
 	db := dbConnect()
-	db.AutoMigrate(&Challenge{})
+	return db.Create(challenge).Error
 }
 
-func CreateChallenge(c *Challenge) {
+func FindChallenge(id string) (Challenge, error) {
 	db := dbConnect()
-	db.Create(c)
+	var challenge Challenge
+	err := db.Preload("Inputs").First(&challenge, id).Error
+	return challenge, err
 }
 
-func FindChallenge(id string) Challenge {
+func FindAllChallenges() ([]Challenge, error) {
 	db := dbConnect()
-	var c Challenge
-	db.First(&c, id)
-	return c
-}
-
-func readFirstChallenge(c *Challenge) {
-	db := dbConnect()
-	db.First(c)
-}
-
-func deleteChallenge(title string) {
-	db := dbConnect()
-	var c Challenge
-	db.Delete(&c, "Title = ?", title)
-}
-
-func readAllChallenges(challenges *[]Challenge) {
-	db := dbConnect()
-	db.Find(challenges)
-}
-
-func Test() {
-	CreateChallenge(&Challenge{Title: "Teste"})
-	deleteChallenge("Teste")
-	var all []Challenge
-	readAllChallenges(&all)
-	for _, challenge := range all {
-		fmt.Println(challenge.Title)
-	}
+	var challenges []Challenge
+	err := db.Preload("Inputs").Find(&challenges).Error
+	return challenges, err
 }
