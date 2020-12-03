@@ -11,10 +11,7 @@ import (
 func initLogger() zerolog.Logger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	consoleWriter := zerolog.ConsoleWriter{Out: ioutil.Discard}
-	logger := zerolog.
-		New(consoleWriter).
-		With().
-		Logger()
+	logger := zerolog.New(consoleWriter)
 	return logger
 }
 
