@@ -1,22 +1,19 @@
 package executor
 
 import (
+	"github.com/rs/zerolog"
+	"io/ioutil"
 	"strings"
 	"testing"
-	"github.com/rs/zerolog"
-	"os"
 )
 
-func initLogger() (zerolog.Logger){
+func initLogger() zerolog.Logger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
+	consoleWriter := zerolog.ConsoleWriter{Out: ioutil.Discard}
 	logger := zerolog.
-					New(consoleWriter).
-					With().
-					Timestamp().
-					Str("MaRT", "executor").
-					Logger().
-					Level(zerolog.DebugLevel)
+		New(consoleWriter).
+		With().
+		Logger()
 	return logger
 }
 

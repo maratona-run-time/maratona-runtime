@@ -2,8 +2,8 @@ package compiler
 
 import (
 	"fmt"
-	"io/ioutil"
 	"github.com/rs/zerolog"
+	"io/ioutil"
 	"os/exec"
 )
 
@@ -23,15 +23,15 @@ func Compile(compiler string, fileName string, logger zerolog.Logger) (string, e
 	commands, compilerSupported := compilationCommand[compiler]
 	if compilerSupported == false {
 		logger.Info().
-			   Msg("Linguagem de programação escolhida não suportada")
+			Msg("Programming language not supported")
 		return "", fmt.Errorf("Language '" + compiler + "' required for compilation not supported")
 	}
 	_, execErr := exec.Command(commands[0], commands[1:]...).Output()
 	if execErr != nil {
 		logger.Warn().
-			   Err(execErr).
-			   Msg("Erro na compilação\n")
-			   
+			Err(execErr).
+			Msg("Compilation Error\n")
+
 		return "", execErr
 	}
 
@@ -40,23 +40,23 @@ func Compile(compiler string, fileName string, logger zerolog.Logger) (string, e
 		code, readErr := ioutil.ReadFile("program.out")
 		if readErr != nil {
 			logger.Error().
-				   Err(readErr).
-				   Msg("Erro durante a leitura do arquivo na hora de adicionar Shebang\n")
-				   
+				Err(readErr).
+				Msg("An error happened while reading the file to add the Shebang\n")
+
 			return "", readErr
 		}
 		executable := append([]byte(shebang+"\n"), code...)
 		writeErr := ioutil.WriteFile("program.out", executable, 0755)
 		if writeErr != nil {
 			logger.Error().
-				   Err(writeErr).
-				   Msg("Erro durante a escrita do arquivo na hora de adicionar Shebang\n")
+				Err(writeErr).
+				Msg("An error happened while writing in the file to add the Shebang\n")
 			return "", writeErr
 		}
 	}
 
 	logger.Debug().
-		   Msg("Compilation Finished")
+		Msg("Compilation Finished")
 
 	return "program.out", nil
 }

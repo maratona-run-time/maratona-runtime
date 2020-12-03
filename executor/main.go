@@ -13,7 +13,7 @@ import (
 	"github.com/go-martini/martini"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 	"github.com/martini-contrib/binding"
-	
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -36,12 +36,12 @@ func main() {
 	}
 	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
 	logger := zerolog.
-					New(multi).
-					With().
-					Timestamp().
-					Str("MaRT", "executor").
-					Logger().
-					Level(zerolog.DebugLevel)
+		New(multi).
+		With().
+		Timestamp().
+		Str("MaRT", "executor").
+		Logger().
+		Level(zerolog.DebugLevel)
 
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, f FileForm) []byte {
@@ -50,8 +50,8 @@ func main() {
 			msg := "An error occurred while trying to open the binary file named '" + f.Binary.Filename + "'"
 			errors.WriteResponse(rs, http.StatusBadRequest, msg, rErr)
 			logger.Error().
-					Err(rErr).
-					Msg(msg)
+				Err(rErr).
+				Msg(msg)
 			return nil
 		}
 
@@ -60,8 +60,8 @@ func main() {
 			msg := "An error occurred while trying to create a local empty file"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, bErr)
 			logger.Error().
-					Err(bErr).
-					Msg(msg)
+				Err(bErr).
+				Msg(msg)
 			return nil
 		}
 
@@ -70,8 +70,8 @@ func main() {
 			msg := "An error occurred while trying to give execution permission to a local empty file"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, exeErr)
 			logger.Error().
-					Err(exeErr).
-					Msg(msg)
+				Err(exeErr).
+				Msg(msg)
 			return nil
 		}
 
@@ -80,8 +80,8 @@ func main() {
 			msg := "An error occurred while trying to copy the received binary to a local file"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
 			logger.Error().
-					Err(copyErr).
-					Msg(msg)
+				Err(copyErr).
+				Msg(msg)
 			return nil
 		}
 
@@ -136,14 +136,9 @@ func main() {
 			msg := "An error occurred while trying to convert the execution result into a json format"
 			errors.WriteResponse(rs, http.StatusInternalServerError, msg, convertErr)
 			logger.Error().
-					Err(convertErr).
-					Msg(msg)
+				Err(convertErr).
+				Msg(msg)
 			return nil
-		}
-		jsonResult, err := json.Marshal(res)
-		if err != nil {
-			logger.Panic().
-					Err(err)
 		}
 		return jsonResult
 	})

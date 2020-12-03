@@ -11,9 +11,9 @@ import (
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/martini-contrib/binding"
 
-	"os"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"os"
 )
 
 type FileForm struct {
@@ -40,12 +40,12 @@ func main() {
 	}
 	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
 	logger := zerolog.
-					New(multi).
-					With().
-					Timestamp().
-					Str("MaRT", "compiler").
-					Logger().
-					Level(zerolog.DebugLevel)
+		New(multi).
+		With().
+		Timestamp().
+		Str("MaRT", "compiler").
+		Logger().
+		Level(zerolog.DebugLevel)
 
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
@@ -54,8 +54,8 @@ func main() {
 		if createErr != nil {
 			msg := "An error occurred while trying to create a file named '" + fileName + "'"
 			logger.Error().
-					Err(createErr).
-					Msg(msg)
+				Err(createErr).
+				Msg(msg)
 			errors.WriteResponse(rs, http.StatusBadRequest, msg, createErr)
 			return
 		}
@@ -63,8 +63,8 @@ func main() {
 		if pErr != nil {
 			msg := "An error occurred while trying to open the received program"
 			logger.Error().
-					Err(pErr).
-					Msg(msg)
+				Err(pErr).
+				Msg(msg)
 			errors.WriteResponse(rs, http.StatusBadRequest, msg, pErr)
 			return
 		}
@@ -75,8 +75,8 @@ func main() {
 		if compilerErr != nil {
 			msg := "An error occurred while trying compile program in language '" + req.Language + "'"
 			logger.Error().
-					Err(compilerErr).
-					Msg(msg)
+				Err(compilerErr).
+				Msg(msg)
 			errors.WriteResponse(rs, http.StatusBadRequest, msg, compilerErr)
 			return
 		}

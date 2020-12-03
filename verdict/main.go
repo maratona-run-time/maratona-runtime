@@ -141,12 +141,12 @@ func main() {
 	}
 	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
 	logger := zerolog.
-					New(multi).
-					With().
-					Timestamp().
-					Str("MaRT", "verdict").
-					Logger().
-					Level(zerolog.DebugLevel)
+		New(multi).
+		With().
+		Timestamp().
+		Str("MaRT", "verdict").
+		Logger().
+		Level(zerolog.DebugLevel)
 
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, f VerdictForm) string {
@@ -154,15 +154,15 @@ func main() {
 		if errors.Is(compilerErr, compilationError) {
 			rs.WriteHeader(http.StatusOK)
 			logger.Debug().
-					Msg("Compilation Error")
+				Msg("Compilation Error")
 			return "CE" // Compilation Error
 		}
 		if compilerErr != nil {
 			msg := "Failed Judgment\nAn error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'"
 			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, compilerErr)
 			logger.Error().
-					Err(compilerErr).
-					Msg(msg)
+				Err(compilerErr).
+				Msg(msg)
 			return ""
 		}
 		writeErr := ioutil.WriteFile("binary", binary, 0777)
@@ -170,8 +170,8 @@ func main() {
 			msg := "Failed judgment\nAn error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'"
 			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
 			logger.Error().
-					Err(writeErr).
-					Msg(msg)
+				Err(writeErr).
+				Msg(msg)
 			return ""
 		}
 		result, executorErr := handleExecute("binary", f.Inputs)
@@ -179,8 +179,8 @@ func main() {
 			msg := "Failed judgment\nAn error occurred while trying to execute the program with the received input files"
 			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, executorErr)
 			logger.Error().
-					Err(executorErr).
-					Msg(msg)
+				Err(executorErr).
+				Msg(msg)
 			return ""
 		}
 
