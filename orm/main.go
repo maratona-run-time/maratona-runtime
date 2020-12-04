@@ -32,6 +32,7 @@ func writeChallenge(rs http.ResponseWriter, challenge orm.Challenge) {
 		errors.WriteResponse(rs, http.StatusInternalServerError, "Error parsing challenge to JSON", err)
 		return
 	}
+	rs.Header().Set("Content-Type", "application/json")
 	rs.Write(jsonChallenge)
 }
 
