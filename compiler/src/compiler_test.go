@@ -2,18 +2,11 @@ package compiler
 
 import (
 	"fmt"
-	"github.com/rs/zerolog"
-	"io/ioutil"
 	"os/exec"
 	"testing"
-)
 
-func initLogger() zerolog.Logger {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	consoleWriter := zerolog.ConsoleWriter{Out: ioutil.Discard}
-	logger := zerolog.New(consoleWriter)
-	return logger
-}
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
+)
 
 func setup(lang string, file string) {
 	exec.Command("cp", "tests/"+file, "./"+file).Output()
@@ -24,7 +17,7 @@ func teardown(file string) {
 }
 
 func TestCompilation(t *testing.T) {
-	logger := initLogger()
+	logger := utils.InitDummyLogger()
 	tests := []struct {
 		lang string
 		file string

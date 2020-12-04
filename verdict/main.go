@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/go-martini/martini"
-	httpErrors "github.com/maratona-run-time/Maratona-Runtime/errors"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 
 	"github.com/rs/zerolog"
@@ -159,7 +159,7 @@ func main() {
 		}
 		if compilerErr != nil {
 			msg := "Failed Judgment\nAn error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'"
-			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, compilerErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, compilerErr)
 			logger.Error().
 				Err(compilerErr).
 				Msg(msg)
@@ -168,7 +168,7 @@ func main() {
 		writeErr := ioutil.WriteFile("binary", binary, 0777)
 		if writeErr != nil {
 			msg := "Failed judgment\nAn error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'"
-			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
 			logger.Error().
 				Err(writeErr).
 				Msg(msg)
@@ -177,7 +177,7 @@ func main() {
 		result, executorErr := handleExecute("binary", f.Inputs)
 		if executorErr != nil {
 			msg := "Failed judgment\nAn error occurred while trying to execute the program with the received input files"
-			httpErrors.WriteResponse(rs, http.StatusInternalServerError, msg, executorErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, executorErr)
 			logger.Error().
 				Err(executorErr).
 				Msg(msg)
@@ -201,7 +201,7 @@ func main() {
 			expectedOutputContent, err := outputs[testName].Open()
 			if err != nil {
 				msg := "Failed judgment\nAn error occurred while trying to open the output file named '" + testName + "'"
-				httpErrors.WriteResponse(rs, http.StatusBadRequest, msg, err)
+				utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
 				logger.Error().
 					Err(err).
 					Msg(msg)

@@ -1,21 +1,14 @@
 package executor
 
 import (
-	"github.com/rs/zerolog"
-	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
 
-func initLogger() zerolog.Logger {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	consoleWriter := zerolog.ConsoleWriter{Out: ioutil.Discard}
-	logger := zerolog.New(consoleWriter)
-	return logger
-}
-
 func TestExecuteOK(t *testing.T) {
-	logger := initLogger()
+	logger := utils.InitDummyLogger()
 	status := Execute("./tests/program", "./tests", 1.0, logger)
 	if status[0].Status != "OK" {
 		t.Errorf("Expected status OK but got %s", status[0].Status)
@@ -26,7 +19,7 @@ func TestExecuteOK(t *testing.T) {
 }
 
 func TestExecuteTLE(t *testing.T) {
-	logger := initLogger()
+	logger := utils.InitDummyLogger()
 	status := Execute("./tests/programLento", "./tests", 1.0, logger)
 	if status[0].Status != "TLE" {
 		t.Errorf("Expected status TLE but got %s", status[0].Status)
@@ -34,7 +27,7 @@ func TestExecuteTLE(t *testing.T) {
 }
 
 func TestExecuteRTE(t *testing.T) {
-	logger := initLogger()
+	logger := utils.InitDummyLogger()
 	status := Execute("./]tests/programRuntimeError", "./tests", 1.0, logger)
 	if status[0].Status != "RTE" {
 		t.Errorf("Expected status RLE but got %s", status[0].Status)

@@ -5,15 +5,15 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/maratona-run-time/Maratona-Runtime/errors"
-
 	"github.com/go-martini/martini"
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
+
+	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 type FileForm struct {
@@ -56,7 +56,7 @@ func main() {
 			logger.Error().
 				Err(createErr).
 				Msg(msg)
-			errors.WriteResponse(rs, http.StatusBadRequest, msg, createErr)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, createErr)
 			return
 		}
 		program, pErr := req.Program.Open()
@@ -65,7 +65,7 @@ func main() {
 			logger.Error().
 				Err(pErr).
 				Msg(msg)
-			errors.WriteResponse(rs, http.StatusBadRequest, msg, pErr)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, pErr)
 			return
 		}
 		io.Copy(f, program)
@@ -77,7 +77,7 @@ func main() {
 			logger.Error().
 				Err(compilerErr).
 				Msg(msg)
-			errors.WriteResponse(rs, http.StatusBadRequest, msg, compilerErr)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, compilerErr)
 			return
 		}
 		http.ServeFile(rs, rq, ret)

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/maratona-run-time/Maratona-Runtime/errors"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 
 	"github.com/go-martini/martini"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
@@ -48,7 +48,7 @@ func main() {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
 			msg := "An error occurred while trying to open the binary file named '" + f.Binary.Filename + "'"
-			errors.WriteResponse(rs, http.StatusBadRequest, msg, rErr)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, rErr)
 			logger.Error().
 				Err(rErr).
 				Msg(msg)
@@ -58,7 +58,7 @@ func main() {
 		binaryFile, bErr := os.Create("program.out")
 		if bErr != nil {
 			msg := "An error occurred while trying to create a local empty file"
-			errors.WriteResponse(rs, http.StatusInternalServerError, msg, bErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, bErr)
 			logger.Error().
 				Err(bErr).
 				Msg(msg)
@@ -68,7 +68,7 @@ func main() {
 		exeErr := os.Chmod("program.out", 0777)
 		if exeErr != nil {
 			msg := "An error occurred while trying to give execution permission to a local empty file"
-			errors.WriteResponse(rs, http.StatusInternalServerError, msg, exeErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, exeErr)
 			logger.Error().
 				Err(exeErr).
 				Msg(msg)
@@ -78,7 +78,7 @@ func main() {
 		_, copyErr := io.Copy(binaryFile, receivedFile)
 		if copyErr != nil {
 			msg := "An error occurred while trying to copy the received binary to a local file"
-			errors.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
 			logger.Error().
 				Err(copyErr).
 				Msg(msg)
@@ -93,7 +93,7 @@ func main() {
 		for _, file := range f.Inputs {
 			if file == nil {
 				msg := "Received nil input file on the executor"
-				errors.WriteResponse(rs, http.StatusBadRequest, msg, nil)
+				utils.WriteResponse(rs, http.StatusBadRequest, msg, nil)
 				logger.Error().
 					Msg(msg)
 				return nil
@@ -102,7 +102,7 @@ func main() {
 			testFile, testFileErr := os.Create(testFileName)
 			if testFileErr != nil {
 				msg := "An error occurred while trying to create a local file named '" + file.Filename + "' on 'inputs/' folder"
-				errors.WriteResponse(rs, http.StatusBadRequest, msg, testFileErr)
+				utils.WriteResponse(rs, http.StatusBadRequest, msg, testFileErr)
 				logger.Error().
 					Err(testFileErr).
 					Msg(msg)
@@ -112,7 +112,7 @@ func main() {
 			receivedTestFile, rfErr := file.Open()
 			if rfErr != nil {
 				msg := "An error occurred while trying to open the received test file named '" + file.Filename + "'"
-				errors.WriteResponse(rs, http.StatusBadRequest, msg, rfErr)
+				utils.WriteResponse(rs, http.StatusBadRequest, msg, rfErr)
 				logger.Error().
 					Err(rfErr).
 					Msg(msg)
@@ -122,7 +122,7 @@ func main() {
 			_, copyErr := io.Copy(testFile, receivedTestFile)
 			if copyErr != nil {
 				msg := "An error occurred while trying to copy the received test to a local file named '" + file.Filename + "' on 'inputs/' folder"
-				errors.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
+				utils.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
 				logger.Error().
 					Err(copyErr).
 					Msg(msg)
@@ -134,7 +134,7 @@ func main() {
 		jsonResult, convertErr := json.Marshal(res)
 		if convertErr != nil {
 			msg := "An error occurred while trying to convert the execution result into a json format"
-			errors.WriteResponse(rs, http.StatusInternalServerError, msg, convertErr)
+			utils.WriteResponse(rs, http.StatusInternalServerError, msg, convertErr)
 			logger.Error().
 				Err(convertErr).
 				Msg(msg)
