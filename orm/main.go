@@ -10,29 +10,42 @@ import (
 	"github.com/martini-contrib/binding"
 
 	"github.com/maratona-run-time/Maratona-Runtime/errors"
+	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
 )
-
-type SubmissionForm struct {
-	Language  string                `form:"language"`
-	Source    *multipart.FileHeader `form:"source"`
-	ProblemId int                   `form:"problemId"`
-}
 
 type ChallengeForm struct {
 	Title       string                  `form:"title"`
 	TimeLimit   int                     `form:"timeLimit"`
 	MemoryLimit int                     `form:"memoryLimit"`
 	Inputs      []*multipart.FileHeader `form:"inputs"`
+	Outputs     []*multipart.FileHeader `form:"outputs"`
 }
 
-func writeChallenge(rs http.ResponseWriter, challenge orm.Challenge) {
+func writeChallenge(rs http.ResponseWriter, challenge model.Challenge) {
 	jsonChallenge, err := json.Marshal(challenge)
 	if err != nil {
 		errors.WriteResponse(rs, http.StatusInternalServerError, "Error parsing challenge to JSON", err)
 		return
 	}
 	rs.Write(jsonChallenge)
+}
+
+func parseRequestFiles(files []*multipart.FileHeader) ([]model.TestFile, error) {
+	array := make([]model.TestFile, len(files))
+	for i, file := range files {
+		content, err := file.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer content.Close()
+		byteInput, err := ioutil.ReadAll(content)
+		if err != nil {
+			return nil, err
+		}
+		array[i] = model.TestFile{Filename: file.Filename, Content: byteInput}
+	}
+	return array, nil
 }
 
 func createOrmServer() *martini.ClassicMartini {
@@ -49,23 +62,18 @@ func createOrmServer() *martini.ClassicMartini {
 	})
 
 	m.Post("/challenge", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm) {
-		inputsArray := make([]orm.Input, len(f.Inputs))
-		for i, input := range f.Inputs {
-			inputContent, err := input.Open()
-			if err != nil {
-				errors.WriteResponse(rs, http.StatusInternalServerError, "Error trying to open input files", err)
-				return
-			}
-			defer inputContent.Close()
-			byteInput, err := ioutil.ReadAll(inputContent)
-			if err != nil {
-				errors.WriteResponse(rs, http.StatusInternalServerError, "Error trying to read input files", err)
-				return
-			}
-			inputsArray[i] = orm.Input{Filename: input.Filename, Content: byteInput}
+		inputsArray, err := parseRequestFiles(f.Inputs)
+		if err != nil {
+			errors.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
+			return
 		}
-		challenge := orm.Challenge{Title: f.Title, TimeLimit: f.TimeLimit, MemoryLimit: f.MemoryLimit, Inputs: inputsArray}
-		err := orm.CreateChallenge(&challenge)
+		outputsArray, err := parseRequestFiles(f.Outputs)
+		if err != nil {
+			errors.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
+			return
+		}
+		challenge := model.Challenge{Title: f.Title, TimeLimit: f.TimeLimit, MemoryLimit: f.MemoryLimit, Inputs: inputsArray, Outputs: outputsArray}
+		err = orm.CreateChallenge(&challenge)
 		if err != nil {
 			errors.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to create challenge", err)
 			return

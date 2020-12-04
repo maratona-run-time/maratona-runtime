@@ -1,11 +1,11 @@
 version: "3.3"
 services:
-  comparator:
+  orchestrator:
     ports:
       - "8080:8080"
     build:
       context: ./
-      dockerfile: comparator/Dockerfile
+      dockerfile: orchestrator/Dockerfile
     networks:
       - maratona-net
   compiler:
