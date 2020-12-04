@@ -5,22 +5,9 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"sync"
+
+	model "github.com/maratona-run-time/Maratona-Runtime/model"
 )
-
-type Challenge struct {
-	gorm.Model
-	Title       string
-	TimeLimit   int
-	MemoryLimit int
-	Inputs      []Input `gorm:"ForeignKey:ChallengeID"`
-}
-
-type Input struct {
-	gorm.Model
-	Filename    string
-	Content     []byte
-	ChallengeID uint
-}
 
 var db *gorm.DB = nil
 var once sync.Once
@@ -37,31 +24,31 @@ func dbConnect() *gorm.DB {
 		if db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}); err != nil {
 			panic(err)
 		}
-		if err = db.AutoMigrate(&Input{}); err != nil {
+		if err = db.AutoMigrate(&model.TestFile{}); err != nil {
 			panic(err)
 		}
-		if err = db.AutoMigrate(&Challenge{}); err != nil {
+		if err = db.AutoMigrate(&model.Challenge{}); err != nil {
 			panic(err)
 		}
 	})
 	return db
 }
 
-func CreateChallenge(challenge *Challenge) error {
+func CreateChallenge(challenge *model.Challenge) error {
 	db := dbConnect()
 	return db.Create(challenge).Error
 }
 
-func FindChallenge(id string) (Challenge, error) {
+func FindChallenge(id string) (model.Challenge, error) {
 	db := dbConnect()
-	var challenge Challenge
-	err := db.Preload("Inputs").First(&challenge, id).Error
+	var challenge model.Challenge
+	err := db.Preload("Inputs").Preload("Outputs").First(&challenge, id).Error
 	return challenge, err
 }
 
-func FindAllChallenges() ([]Challenge, error) {
+func FindAllChallenges() ([]model.Challenge, error) {
 	db := dbConnect()
-	var challenges []Challenge
-	err := db.Preload("Inputs").Find(&challenges).Error
+	var challenges []model.Challenge
+	err := db.Preload("Inputs").Preload("Outputs").Find(&challenges).Error
 	return challenges, err
 }
