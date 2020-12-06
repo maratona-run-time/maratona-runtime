@@ -1,11 +1,11 @@
 version: "3.3"
 services:
-  comparator:
+  orchestrator:
     ports:
       - "8080:8080"
     build:
       context: ./
-      dockerfile: comparator/Dockerfile
+      dockerfile: orchestrator/Dockerfile
     networks:
       - maratona-net
   compiler:
@@ -32,5 +32,30 @@ services:
       dockerfile: verdict/Dockerfile
     networks:
       - maratona-net
+  postgres:
+    ports:
+      - "5432:5432"
+    image: "postgres:alpine"
+    environment:
+        POSTGRES_PASSWORD: password
+        POSTGRES_USER: postgres
+        POSTGRES_DB: mart
+    volumes:
+      - postgres:/var/lib/postgresql/data 
+    networks:
+      - database-net
+  orm:
+    ports:
+      - "8084:8080"
+    build:
+      context: ./
+      dockerfile: orm/Dockerfile
+    networks:
+      - maratona-net
+      - database-net
+
 networks: 
-  maratona-net:
+  maratona-net: 
+  database-net:
+volumes:
+    postgres:
