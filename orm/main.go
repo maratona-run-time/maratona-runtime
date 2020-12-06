@@ -9,9 +9,9 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
 
-	"github.com/maratona-run-time/Maratona-Runtime/errors"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
 
 type ChallengeForm struct {
@@ -25,7 +25,7 @@ type ChallengeForm struct {
 func writeChallenge(rs http.ResponseWriter, challenge model.Challenge) {
 	jsonChallenge, err := json.Marshal(challenge)
 	if err != nil {
-		errors.WriteResponse(rs, http.StatusInternalServerError, "Error parsing challenge to JSON", err)
+		utils.WriteResponse(rs, http.StatusInternalServerError, "Error parsing challenge to JSON", err)
 		return
 	}
 	rs.Header().Set("Content-Type", "application/json")
@@ -56,7 +56,7 @@ func createOrmServer() *martini.ClassicMartini {
 		id := params["id"]
 		challenge, err := orm.FindChallenge(id)
 		if err != nil {
-			errors.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id), err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id), err)
 			return
 		}
 		writeChallenge(rs, challenge)
@@ -65,18 +65,18 @@ func createOrmServer() *martini.ClassicMartini {
 	m.Post("/challenge", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm) {
 		inputsArray, err := parseRequestFiles(f.Inputs)
 		if err != nil {
-			errors.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
 			return
 		}
 		outputsArray, err := parseRequestFiles(f.Outputs)
 		if err != nil {
-			errors.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 			return
 		}
 		challenge := model.Challenge{Title: f.Title, TimeLimit: f.TimeLimit, MemoryLimit: f.MemoryLimit, Inputs: inputsArray, Outputs: outputsArray}
 		err = orm.CreateChallenge(&challenge)
 		if err != nil {
-			errors.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to create challenge", err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to create challenge", err)
 			return
 		}
 		writeChallenge(rs, challenge)
