@@ -64,7 +64,7 @@ func TestCompilerServer(t *testing.T) {
 	}{
 		{
 			name:           "C++/OK",
-			language:       "C++",
+			language:       "C++11",
 			filepath:       "src/tests/program.cpp",
 			expectedOutput: "Hello World!\n",
 			expectedStatus: http.StatusOK,
@@ -92,7 +92,7 @@ func TestCompilerServer(t *testing.T) {
 		},
 		{
 			name:           "C++/CE",
-			language:       "C++",
+			language:       "C++11",
 			filepath:       "src/tests/compilation_error.cpp",
 			expectedOutput: "Hello World!\n",
 			expectedStatus: http.StatusBadRequest,
