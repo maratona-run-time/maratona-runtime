@@ -11,8 +11,8 @@ import (
 	"net/http"
 
 	"github.com/go-martini/martini"
-	httpErrors "github.com/maratona-run-time/Maratona-Runtime/errors"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
+	utils "github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 )
 
@@ -125,13 +125,13 @@ func main() {
 		challenge, err := getChallengeInfo(form.ChallengeID)
 		if err != nil {
 			msg := fmt.Sprintf("Could not find challenge %v", form.ChallengeID)
-			httpErrors.WriteResponse(rs, http.StatusBadRequest, msg, err)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
 		}
 
 		verdictResponse, err := callVerdict(challenge, form)
 		if err != nil {
 			msg := "Could not get response from verdict"
-			httpErrors.WriteResponse(rs, http.StatusBadRequest, msg, err)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
 			return
 		}
 

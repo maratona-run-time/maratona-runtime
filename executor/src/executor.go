@@ -9,11 +9,14 @@ import (
 	"time"
 
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
+
+	"github.com/rs/zerolog"
 )
 
 func Execute(path string,
 	inputsFolder string,
-	timeout float32) []model.ExecutionResult {
+	timeout float32,
+	logger zerolog.Logger) []model.ExecutionResult {
 
 	var files []string
 
@@ -29,7 +32,7 @@ func Execute(path string,
 		return nil
 	})
 	if err != nil {
-		fmt.Println(err)
+		logger.Error().Err(err)
 	}
 
 	var res []model.ExecutionResult
@@ -45,7 +48,7 @@ func Execute(path string,
 
 		file, fileErr := os.Open(inputFileName)
 		if fileErr != nil {
-			panic(fileErr)
+			logger.Error().Err(fileErr)
 		}
 		defer file.Close()
 
@@ -54,15 +57,17 @@ func Execute(path string,
 		select {
 		case <-ctx.Done():
 			res = append(res, model.ExecutionResult{inputFileName, "TLE", "Tempo limite excedido"})
+			logger.Debug().Msg("Time limit exceeded")
 			return res
 		case err := <-errorOutput:
 			res = append(res, model.ExecutionResult{inputFileName, "RTE", err.Error()})
+			logger.Debug().Msg("Run time error")
 			return res
 		case out := <-output:
 			res = append(res, model.ExecutionResult{inputFileName, "OK", string(out)})
 		}
 	}
-
+	logger.Debug().Msg("Executions finished")
 	return res
 }
 
