@@ -4,6 +4,6 @@ WORKDIR /go/src/app
 COPY go.sum go.mod ./
 RUN go mod download
 COPY model/ model/
-COPY errors/ errors/
+COPY utils/ utils/
 COPY orchestrator/ orchestrator/
 CMD ["go", "run", "orchestrator/main.go"]
