@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -33,13 +32,13 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
-	languageField, err := writer.CreateFormField("language")
+	fieldName := "language"
+	err := utils.CreateFormField(writer, fieldName, language)
 	if err != nil {
 		return nil, err
 	}
-	languageField.Write([]byte(language))
 
-	fieldName := "source"
+	fieldName = "source"
 	err = utils.CreateFormFileFromFileHeader(writer, fieldName, source)
 	if err != nil {
 		return nil, err
@@ -70,20 +69,15 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	return binary, nil
 }
 
-func handleExecute(binary string, inputs []*multipart.FileHeader) ([]model.ExecutionResult, error) {
+func handleExecute(binaryFilePath string, inputs []*multipart.FileHeader) ([]model.ExecutionResult, error) {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
-
-	binaryField, err := writer.CreateFormFile("binary", binary)
+	fieldName := "binary"
+	fileName := "binary"
+	err := utils.CreateFormFileFromFilePath(writer, fieldName, fileName, binaryFilePath)
 	if err != nil {
 		return nil, err
 	}
-	binaryFile, err := os.Open(binary)
-	if err != nil {
-		return nil, err
-	}
-	defer binaryFile.Close()
-	io.Copy(binaryField, binaryFile)
 
 	for _, input := range inputs {
 		err = utils.CreateFormFileFromFileHeader(writer, "inputs", input)

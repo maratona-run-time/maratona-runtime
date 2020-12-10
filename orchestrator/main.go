@@ -56,11 +56,11 @@ func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, 
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
-	languageField, err := writer.CreateFormField("language")
+	fieldName := "language"
+	err := utils.CreateFormField(writer, fieldName, form.Language)
 	if err != nil {
 		return nil, err
 	}
-	languageField.Write([]byte(form.Language))
 
 	err = utils.CreateFormFileFromFileHeader(writer, "source", form.Source)
 	if err != nil {
