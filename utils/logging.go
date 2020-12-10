@@ -20,11 +20,11 @@ func InitDummyLogger() zerolog.Logger {
 func InitLogger(containerName string) zerolog.Logger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
-	logFile, logErr := os.OpenFile(containerName+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	logFile, errLog := os.OpenFile(containerName+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	defer logFile.Close()
-	if logErr != nil {
+	if errLog != nil {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-		log.Fatal().Err(logErr).Msg("Could not create log file")
+		log.Fatal().Err(errLog).Msg("Could not create log file")
 	}
 	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
 	logger := zerolog.
