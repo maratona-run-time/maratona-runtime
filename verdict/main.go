@@ -9,11 +9,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/go-martini/martini"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 	"github.com/martini-contrib/binding"
 
 	"github.com/rs/zerolog"
@@ -29,20 +29,6 @@ type VerdictForm struct {
 	Outputs  []*multipart.FileHeader `form:"outputs"`
 }
 
-func createFileField(writer *multipart.Writer, fieldName string, file *multipart.FileHeader) error {
-	field, err := writer.CreateFormFile(fieldName, file.Filename)
-	if err != nil {
-		return err
-	}
-	content, err := file.Open()
-	if err != nil {
-		return err
-	}
-	io.Copy(field, content)
-	defer content.Close()
-	return nil
-}
-
 func handleCompiling(language string, source *multipart.FileHeader) ([]byte, error) {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
@@ -53,7 +39,7 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	}
 	languageField.Write([]byte(language))
 
-	err = createFileField(writer, "program", source)
+	err = utils.CreateFormFileFromFileHeader(writer, "program", source)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +85,7 @@ func handleExecute(binary string, inputs []*multipart.FileHeader) ([]model.Execu
 	io.Copy(binaryField, binaryFile)
 
 	for _, input := range inputs {
-		err = createFileField(writer, "inputs", input)
+		err = utils.CreateFormFileFromFileHeader(writer, "inputs", input)
 		if err != nil {
 			return nil, err
 		}
@@ -124,10 +110,6 @@ func handleExecute(binary string, inputs []*multipart.FileHeader) ([]model.Execu
 		return nil, err
 	}
 	return *executionResult, nil
-}
-
-func compare(expectedOutput string, programOutput string) bool {
-	return strings.EqualFold(programOutput, expectedOutput)
 }
 
 func main() {
@@ -155,7 +137,7 @@ func main() {
 			rs.WriteHeader(http.StatusOK)
 			logger.Debug().
 				Msg("Compilation Error")
-			return "CE" // Compilation Error
+			return "CE"
 		}
 		if compilerErr != nil {
 			msg := "Failed Judgment\nAn error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'"
@@ -165,7 +147,9 @@ func main() {
 				Msg(msg)
 			return ""
 		}
-		writeErr := ioutil.WriteFile("binary", binary, 0777)
+
+		const binaryFileName = "binary"
+		writeErr := ioutil.WriteFile(binaryFileName, binary, 0777)
 		if writeErr != nil {
 			msg := "Failed judgment\nAn error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'"
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
@@ -174,7 +158,7 @@ func main() {
 				Msg(msg)
 			return ""
 		}
-		result, executorErr := handleExecute("binary", f.Inputs)
+		results, executorErr := handleExecute(binaryFileName, f.Inputs)
 		if executorErr != nil {
 			msg := "Failed judgment\nAn error occurred while trying to execute the program with the received input files"
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, executorErr)
@@ -191,32 +175,13 @@ func main() {
 			outputs[outputName] = out
 		}
 
-		for _, testExecution := range result {
-			if testExecution.Status != "OK" {
-				logger.Info().Msg("Judgment finished sentence " + testExecution.Status + " " + testExecution.TestName)
-				return testExecution.Status + " " + testExecution.TestName
-			}
+		result, err := verdict.Judge(results, outputs, logger)
 
-			testName := testExecution.TestName[len("inputs/") : len(testExecution.TestName)-len(".in")]
-			expectedOutputContent, err := outputs[testName].Open()
-			if err != nil {
-				msg := "Failed judgment\nAn error occurred while trying to open the output file named '" + testName + "'"
-				utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
-				logger.Error().
-					Err(err).
-					Msg(msg)
-				return ""
-			}
-			defer expectedOutputContent.Close()
-			byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
-			expectedOutput := string(byteExpectedOutput)
-			if compare(testExecution.Message, expectedOutput) == false {
-				logger.Info().Msg("Judgment finished sentence Wrong Answer")
-				return "WA" + " " + testExecution.TestName
-			}
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusBadRequest, "", err)
+			return ""
 		}
-		logger.Info().Msg("Judgment finished sentence Accepted")
-		return "AC"
+		return result
 	})
 	m.RunOnAddr(":8080")
 }
