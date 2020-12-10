@@ -22,7 +22,7 @@ func resultEqual(a, b model.ExecutionResult) bool {
 	}
 }
 
-func addFile(writer *multipart.Writer, filePath string, fieldName string) error {
+func addFile(writer *multipart.Writer, filePath, fieldName string) error {
 	fileName := path.Base(filePath)
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {

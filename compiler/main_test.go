@@ -13,33 +13,21 @@ import (
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
 
-func createRequestForm(writer *multipart.Writer, language, filepath string) error {
-
-	languageField, err := writer.CreateFormField("language")
+func createRequestForm(writer *multipart.Writer, language, filePath string) error {
+	fieldName := "language"
+	err := utils.CreateFormField(writer, fieldName, language)
 	if err != nil {
 		return err
 	}
-	_, err = languageField.Write([]byte(language))
-	if err != nil {
-		return err
-	}
-
-	content, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return err
-	}
-	field, err := writer.CreateFormFile("program", "source")
-	if err != nil {
-		return err
-	}
-	_, err = field.Write(content)
-	return err
+	fieldName = "program"
+	fileName := "source"
+	return utils.CreateFormFileFromFilePath(writer, fieldName, fileName, filePath)
 }
 
-func createRequest(t *testing.T, language, filepath string) *http.Request {
+func createRequest(t *testing.T, language, filePath string) *http.Request {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
-	err := createRequestForm(writer, language, filepath)
+	err := createRequestForm(writer, language, filePath)
 	if err != nil {
 		t.Error("could not create request form")
 	}
