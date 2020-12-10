@@ -39,7 +39,8 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 	}
 	languageField.Write([]byte(language))
 
-	err = utils.CreateFormFileFromFileHeader(writer, "program", source)
+	fieldName := "source"
+	err = utils.CreateFormFileFromFileHeader(writer, fieldName, source)
 	if err != nil {
 		return nil, err
 	}
