@@ -10,11 +10,17 @@ import (
 	"path"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
+
+func resultEqual(a, b model.ExecutionResult) bool {
+	if a.Status == "OK" {
+		return a.Status == b.Status && a.TestName == b.TestName && a.Message == b.Message
+	} else {
+		return a.Status == b.Status && a.TestName == b.TestName
+	}
+}
 
 func addFile(writer *multipart.Writer, filePath string, fieldName string) error {
 	fileName := path.Base(filePath)
@@ -178,13 +184,15 @@ func TestExecutorServer(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not read request response: %v", err.Error())
 			}
-			var result []model.ExecutionResult
-			err = json.Unmarshal(jsonResult, &result)
+			var results []model.ExecutionResult
+			err = json.Unmarshal(jsonResult, &results)
 			if err != nil {
 				t.Errorf("could not unmarshall execution result: %v", err.Error())
 			}
-			if !cmp.Equal(result, test.expectedResult) {
-				t.Errorf("expected %v, got %v", test.expectedResult, result)
+			for i, result := range results {
+				if !resultEqual(result, test.expectedResult[i]) {
+					t.Errorf("expected %v, got %v", test.expectedResult[i], result)
+				}
 			}
 		})
 	}
