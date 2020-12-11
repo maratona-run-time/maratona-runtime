@@ -15,6 +15,8 @@ func compare(expectedOutput string, programOutput string) bool {
 	return strings.EqualFold(programOutput, expectedOutput)
 }
 
+// Judge compares the execution output of a submission and the expected output values.
+// Returns a string with the judgment status ("AC", "WA", "TLE" or "RTE") and, possibly, an error.
 func Judge(result []model.ExecutionResult, outputs map[string]*multipart.FileHeader, logger zerolog.Logger) (string, error) {
 	for _, testExecution := range result {
 		if testExecution.Status != "OK" {
