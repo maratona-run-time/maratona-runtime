@@ -9,6 +9,7 @@ import (
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
+	"github.com/rs/zerolog"
 
 	"os"
 )
@@ -25,7 +26,6 @@ var sourceFileName = map[string]string{
 	"Python": "program.py",
 	"Go":     "program.go",
 }
-
 
 func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
@@ -74,8 +74,8 @@ func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 }
 
 func main() {
-  
-  logger := utils.InitLogger("compiler")
+
+	logger := utils.InitLogger("compiler")
 	m := createCompilerServer(logger)
 	m.RunOnAddr(":8080")
 }

@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/maratona-run-time/Maratona-Runtime/utils"
-
 	"github.com/go-martini/martini"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
+	"github.com/rs/zerolog"
 )
 
 // FileForm define o tipo de dados esperado no POST.
@@ -22,9 +22,8 @@ type FileForm struct {
 	Inputs []*multipart.FileHeader `form:"inputs"`
 }
 
-
 func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
-  m := martini.Classic()
+	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, f FileForm) []byte {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
