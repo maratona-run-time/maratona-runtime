@@ -22,27 +22,17 @@ func resultEqual(a, b model.ExecutionResult) bool {
 	}
 }
 
-func addFile(writer *multipart.Writer, filePath string, fieldName string) error {
-	fileName := path.Base(filePath)
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-	field, err := writer.CreateFormFile(fieldName, fileName)
-	if err != nil {
-		return err
-	}
-	_, err = field.Write(content)
-	return err
-}
-
 func createRequestForm(writer *multipart.Writer, filePath string, inputPaths []string) error {
-	err := addFile(writer, filePath, "binary")
+	fieldName := "binary"
+	fileName := path.Base(filePath)
+	err := utils.CreateFormFileFromFilePath(writer, fieldName, fileName, filePath)
 	if err != nil {
 		return err
 	}
 	for _, inputPath := range inputPaths {
-		err := addFile(writer, inputPath, "inputs")
+		fieldName = "inputs"
+		fileName = path.Base(inputPath)
+		err = utils.CreateFormFileFromFilePath(writer, fieldName, fileName, inputPath)
 		if err != nil {
 			return err
 		}
