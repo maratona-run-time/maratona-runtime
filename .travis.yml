@@ -6,3 +6,6 @@ go:
 script:
   - diff -u <(echo -n) <(gofmt -d ./)
   - go test ./... -v -cover
+
+after_success:
+  - codecov
