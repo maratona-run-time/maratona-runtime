@@ -22,10 +22,9 @@ type FileForm struct {
 	Inputs []*multipart.FileHeader `form:"inputs"`
 }
 
-func main() {
-	logger := utils.InitLogger("executor")
 
-	m := martini.Classic()
+func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
+  m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, f FileForm) []byte {
 		receivedFile, rErr := f.Binary.Open()
 		if rErr != nil {
@@ -124,5 +123,11 @@ func main() {
 		}
 		return jsonResult
 	})
+	return m
+}
+
+func main() {
+	logger := utils.InitLogger("executor")
+	m := createExecutorServer(logger)
 	m.RunOnAddr(":8080")
 }

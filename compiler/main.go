@@ -26,9 +26,8 @@ var sourceFileName = map[string]string{
 	"Go":     "program.go",
 }
 
-func main() {
-	logger := utils.InitLogger("compiler")
 
+func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
 		fileName := sourceFileName[req.Language]
@@ -54,6 +53,13 @@ func main() {
 		f.Close()
 		program.Close()
 		ret, compilerErr := compiler.Compile(req.Language, fileName, logger)
+		err := os.Remove(fileName)
+		if err != nil {
+			msg := "Could not remove source file"
+			logger.Error().
+				Err(err).
+				Msg(msg)
+		}
 		if compilerErr != nil {
 			msg := "An error occurred while trying compile program in language '" + req.Language + "'"
 			logger.Error().
@@ -64,5 +70,12 @@ func main() {
 		}
 		http.ServeFile(rs, rq, ret)
 	})
+	return m
+}
+
+func main() {
+  
+  logger := utils.InitLogger("compiler")
+	m := createCompilerServer(logger)
 	m.RunOnAddr(":8080")
 }
