@@ -126,7 +126,8 @@ func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
 }
 
 func main() {
-	logger := utils.InitLogger("executor")
+	logger, logFile := utils.InitLogger("executor")
+	defer logFile.Close()
 	m := createExecutorServer(logger)
 	m.RunOnAddr(":8080")
 }

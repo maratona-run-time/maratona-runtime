@@ -74,8 +74,8 @@ func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 }
 
 func main() {
-
-	logger := utils.InitLogger("compiler")
+	logger, logFile := utils.InitLogger("compiler")
+	defer logFile.Close()
 	m := createCompilerServer(logger)
 	m.RunOnAddr(":8080")
 }

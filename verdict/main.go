@@ -104,7 +104,8 @@ func handleExecute(binaryFilePath string, inputs []*multipart.FileHeader) ([]mod
 }
 
 func main() {
-	logger := utils.InitLogger("verdict")
+	logger, logFile := utils.InitLogger("verdict")
+	defer logFile.Close()
 
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, f VerdictForm) string {

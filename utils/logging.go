@@ -17,11 +17,10 @@ func InitDummyLogger() zerolog.Logger {
 }
 
 //InitLogger creates and configures a logger to be used in a specific container
-func InitLogger(containerName string) zerolog.Logger {
+func InitLogger(containerName string) (zerolog.Logger, *os.File) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
 	logFile, errLog := os.OpenFile(containerName+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
-	defer logFile.Close()
 	if errLog != nil {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 		log.Fatal().Err(errLog).Msg("Could not create log file")
@@ -34,5 +33,5 @@ func InitLogger(containerName string) zerolog.Logger {
 		Str("MaRT", containerName).
 		Logger().
 		Level(zerolog.DebugLevel)
-	return logger
+	return logger, logFile
 }
