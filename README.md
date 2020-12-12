@@ -1,5 +1,5 @@
 # Maratona-Runtime
-
+[![Go Reference](https://pkg.go.dev/badge/github.com/maratona-run-time/Maratona-Runtime?readme=expanded.svg)](https://pkg.go.dev/github.com/maratona-run-time/Maratona-Runtime?readme=expanded)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maratona-run-time/Maratona-Runtime)](https://goreportcard.com/report/github.com/maratona-run-time/Maratona-Runtime)
 
 Maratona Runtime implements the core service of judging solutions for ICPC and CTF-related coding competitions.
