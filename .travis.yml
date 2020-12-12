@@ -5,4 +5,7 @@ go:
 
 script:
   - diff -u <(echo -n) <(gofmt -d ./)
-  - go test ./... -v -cover
+  - go test ./... -v -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

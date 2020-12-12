@@ -16,7 +16,7 @@ import (
 
 type FileForm struct {
 	Language string                `form:"language"`
-	Program  *multipart.FileHeader `form:"program"`
+	Source   *multipart.FileHeader `form:"source"`
 }
 
 var sourceFileName = map[string]string{
@@ -40,7 +40,7 @@ func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 			utils.WriteResponse(rs, http.StatusBadRequest, msg, createErr)
 			return
 		}
-		program, pErr := req.Program.Open()
+		program, pErr := req.Source.Open()
 		if pErr != nil {
 			msg := "An error occurred while trying to open the received program"
 			logger.Error().

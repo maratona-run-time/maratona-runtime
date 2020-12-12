@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -19,26 +18,9 @@ import (
 var getChallengeError = errors.New("Error getting challenge")
 var verdictResponseError = errors.New("Error on verdict response")
 
-func createFileField(writer *multipart.Writer, fieldName string, file *multipart.FileHeader) error {
-	field, err := writer.CreateFormFile(fieldName, file.Filename)
-	if err != nil {
-		return err
-	}
-	content, err := file.Open()
-	if err != nil {
-		return err
-	}
-	io.Copy(field, content)
-	defer content.Close()
-	return nil
-}
 func createTestFileField(writer *multipart.Writer, fieldName string, files []model.TestFile) error {
 	for _, file := range files {
-		field, err := writer.CreateFormFile(fieldName, file.Filename)
-		if err != nil {
-			return err
-		}
-		_, err = field.Write(file.Content)
+		err := utils.CreateFormFileFromContent(writer, fieldName, file.Content, file.Filename)
 		if err != nil {
 			return err
 		}
@@ -74,13 +56,13 @@ func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, 
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
-	languageField, err := writer.CreateFormField("language")
+	fieldName := "language"
+	err := utils.CreateFormField(writer, fieldName, form.Language)
 	if err != nil {
 		return nil, err
 	}
-	languageField.Write([]byte(form.Language))
 
-	err = createFileField(writer, "source", form.Source)
+	err = utils.CreateFormFileFromFileHeader(writer, "source", form.Source)
 	if err != nil {
 		return nil, err
 	}
