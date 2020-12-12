@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"os"
 
 	"github.com/go-martini/martini"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
