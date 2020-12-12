@@ -4,18 +4,19 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 
-	"github.com/go-martini/martini"
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
-	"github.com/martini-contrib/binding"
 
-	"os"
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/binding"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
+// FileForm is a struct containing the source code of a submission and string identifiying it language.
 type FileForm struct {
 	Language string                `form:"language"`
 	Source   *multipart.FileHeader `form:"source"`

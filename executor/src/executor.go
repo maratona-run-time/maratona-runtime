@@ -8,11 +8,15 @@ import (
 	"path/filepath"
 	"time"
 
-	model "github.com/maratona-run-time/Maratona-Runtime/model"
+	"github.com/maratona-run-time/Maratona-Runtime/model"
 
 	"github.com/rs/zerolog"
 )
 
+// Execute executes the compiled code (at path) of a given submission against a set of inputs (contained in inputsFolder).
+// After executing all submissions the function returns an array containing the results of every execution.
+// If the execution takes longer than `timeout` seconds, "TLE" is returned.
+// If a run time error occurs, "RTE" is returned.
 func Execute(path string,
 	inputsFolder string,
 	timeout float32,
@@ -56,7 +60,7 @@ func Execute(path string,
 
 		select {
 		case <-ctx.Done():
-			res = append(res, model.ExecutionResult{inputFileName, "TLE", "Tempo limite excedido"})
+			res = append(res, model.ExecutionResult{inputFileName, "TLE", "Time limit exceeded"})
 			logger.Debug().Msg("Time limit exceeded")
 			return res
 		case err := <-errorOutput:

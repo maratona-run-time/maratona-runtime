@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// WriteResponse is used to write a HTTP response status in case of an error
 func WriteResponse(rs http.ResponseWriter, status int, msg string, err error) {
 	rs.WriteHeader(status)
 	errorMsg := msg
