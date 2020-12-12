@@ -7,16 +7,12 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"os"
 
 	"github.com/go-martini/martini"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 	"github.com/martini-contrib/binding"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 var compilationError = errors.New("Compilation Error")
@@ -108,22 +104,8 @@ func handleExecute(binaryFilePath string, inputs []*multipart.FileHeader) ([]mod
 }
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
-	logFile, logErr := os.OpenFile("verdict.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	logger, logFile := utils.InitLogger("verdict")
 	defer logFile.Close()
-	if logErr != nil {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-		log.Fatal().Err(logErr).Msg("Could not create log file")
-	}
-	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
-	logger := zerolog.
-		New(multi).
-		With().
-		Timestamp().
-		Str("MaRT", "verdict").
-		Logger().
-		Level(zerolog.DebugLevel)
 
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, f VerdictForm) string {

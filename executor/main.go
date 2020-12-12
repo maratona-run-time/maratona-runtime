@@ -8,14 +8,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/maratona-run-time/Maratona-Runtime/utils"
-
 	"github.com/go-martini/martini"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
-
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // FileForm define o tipo de dados esperado no POST.
@@ -129,23 +126,8 @@ func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
 }
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
-	logFile, logErr := os.OpenFile("executor.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	logger, logFile := utils.InitLogger("executor")
 	defer logFile.Close()
-	if logErr != nil {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-		log.Fatal().Err(logErr).Msg("Could not create log file")
-	}
-	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
-	logger := zerolog.
-		New(multi).
-		With().
-		Timestamp().
-		Str("MaRT", "executor").
-		Logger().
-		Level(zerolog.DebugLevel)
-
 	m := createExecutorServer(logger)
 	m.RunOnAddr(":8080")
 }
