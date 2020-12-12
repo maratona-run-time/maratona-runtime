@@ -1,4 +1,5 @@
 # Maratona-Runtime
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/maratona-run-time/Maratona-Runtime?readme=expanded.svg)](https://pkg.go.dev/github.com/maratona-run-time/Maratona-Runtime?readme=expanded)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maratona-run-time/Maratona-Runtime)](https://goreportcard.com/report/github.com/maratona-run-time/Maratona-Runtime)
 [![codecov](https://codecov.io/gh/maratona-run-time/Maratona-Runtime/branch/master/graph/badge.svg?token=G1GDE2TBXU)](https://codecov.io/gh/maratona-run-time/Maratona-Runtime)
@@ -29,7 +30,6 @@ TODO: agora temos duas redes né
 We are using a PostgreSQL database to store challenges and submissions details.
 
 ![Relational scheme of our database.](assets/db.png)
-
 
 ## Testing
 
