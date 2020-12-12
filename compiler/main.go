@@ -11,9 +11,7 @@ import (
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
-
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // FileForm is a struct containing the source code of a submission and string identifiying it language.
@@ -77,23 +75,8 @@ func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 }
 
 func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}
-	logFile, logErr := os.OpenFile("compiler.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	logger, logFile := utils.InitLogger("compiler")
 	defer logFile.Close()
-	if logErr != nil {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-		log.Fatal().Err(logErr).Msg("Could not create log file")
-	}
-	multi := zerolog.MultiLevelWriter(consoleWriter, logFile)
-	logger := zerolog.
-		New(multi).
-		With().
-		Timestamp().
-		Str("MaRT", "compiler").
-		Logger().
-		Level(zerolog.DebugLevel)
-
 	m := createCompilerServer(logger)
 	m.RunOnAddr(":8080")
 }
