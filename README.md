@@ -12,6 +12,8 @@ The system, for now, is separated in the following parts:
 - **Verdict**: Receives information regarding problem and submission details.
 - **Compiler**: Tasked with compiling a received source code and responding with the generated binary code (except for interpreted languages, such as Python).
 - **Executor**: Executes a binary code or a interpreted language program against a set of inputs and responds with generated outputs.
+- **Orchestrator**: Receives challenge submissions and is responsible for triggering their evaluation.
+- **ORM**: Responsible for administering a PostgreSQL server and saving submissions and their verdicts.
 
 Follows a visual representation of the communication between these services:
 
@@ -19,6 +21,14 @@ Follows a visual representation of the communication between these services:
 
 For now, the system can be started using the [docker-compose](docker-compose.yml).
 All communication between the services is done via HTTP, using a single docker network "maratona-net".
+TODO: agora temos duas redes né
+
+## Submissions Database
+
+We are using a PostgreSQL database to store challenges and submissions details.
+
+![Relational scheme of our database.](assets/db.png)
+
 
 ## Testing
 
