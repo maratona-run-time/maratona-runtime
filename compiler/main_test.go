@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/rs/zerolog/log"
 )
 
 func createRequestForm(writer *multipart.Writer, language, filePath string) error {
@@ -40,6 +41,14 @@ func createRequest(t *testing.T, language, filePath string) *http.Request {
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req
+}
+func cleanUp() {
+	errRem := os.Remove("executable")
+	if errRem != nil {
+		log.Error().
+			Err(errRem).
+			Msg("Error removing 'executable'")
+	}
 }
 
 func TestCompilerServer(t *testing.T) {
@@ -112,6 +121,7 @@ func TestCompilerServer(t *testing.T) {
 
 			r, w, err := os.Pipe()
 			if err != nil {
+				cleanUp()
 				t.Error("could not create pipe")
 			}
 
@@ -122,17 +132,21 @@ func TestCompilerServer(t *testing.T) {
 			}
 			err = cmd.Run()
 			if err != nil {
+				cleanUp()
 				t.Error("could not run executable")
 			}
 			w.Close()
 			out, err := ioutil.ReadAll(r)
 			if err != nil {
+				cleanUp()
 				t.Error("could not read executable output")
 			}
 
 			if string(out) != test.expectedOutput {
+				cleanUp()
 				t.Errorf("expected output to be %v, got %v", test.expectedOutput, string(out))
 			}
 		})
 	}
+	cleanUp()
 }

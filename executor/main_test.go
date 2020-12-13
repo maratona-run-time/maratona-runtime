@@ -7,11 +7,13 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"testing"
 
 	"github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/rs/zerolog/log"
 )
 
 func resultEqual(a, b model.ExecutionResult) bool {
@@ -56,6 +58,24 @@ func createRequest(t *testing.T, filePath string, inputPaths []string) *http.Req
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req
+}
+
+func cleanUp() {
+
+	dir, err := ioutil.ReadDir("inputs")
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("Error reading the contents of the 'inputs' directory")
+	}
+	for _, d := range dir {
+		err = os.Remove(path.Join([]string{"inputs", d.Name()}...))
+		if err != nil {
+			log.Error().
+				Err(err).
+				Msg("Error deleting file " + d.Name())
+		}
+	}
 }
 
 func TestExecutorServer(t *testing.T) {
@@ -164,26 +184,32 @@ func TestExecutorServer(t *testing.T) {
 			res := httptest.NewRecorder()
 			m.ServeHTTP(res, req)
 			if res.Code != test.expectedStatus {
+				cleanUp()
 				t.Errorf("expected status %v, got %v", test.expectedStatus, res.Code)
 			}
 			if res.Code != http.StatusOK {
+				cleanUp()
 				return
 			}
 
 			jsonResult, err := ioutil.ReadAll(res.Body)
 			if err != nil {
+				cleanUp()
 				t.Errorf("could not read request response: %v", err.Error())
 			}
 			var results []model.ExecutionResult
 			err = json.Unmarshal(jsonResult, &results)
 			if err != nil {
+				cleanUp()
 				t.Errorf("could not unmarshall execution result: %v", err.Error())
 			}
 			for i, result := range results {
 				if !resultEqual(result, test.expectedResult[i]) {
+					cleanUp()
 					t.Errorf("expected %v, got %v", test.expectedResult[i], result)
 				}
 			}
 		})
 	}
+	cleanUp()
 }
