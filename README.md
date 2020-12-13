@@ -46,6 +46,20 @@ go test ./...
 For service-specific tests, search for "*_test.go" files, such as: "verdict_test.go".
 One can execute those by running `go test` on the folder where they are located.
 
+### Coverage
+
+To keep track of coverage information this project uses [codecov.io](https://codecov.io/github/maratona-run-time/Maratona-Runtime).
+
+To check the test coverage locally one can use:
+
+```bash
+export CGO_ENABLED=0
+go test ./... -coverprofile=coverage.txt -covermode=atomic
+bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
+```
+
+These commands should output a codecov URL with the coverage report.
+
 ## Travis
 
 All configuration is on the project's [travis yaml](.travis.yml) file.
@@ -54,3 +68,5 @@ Travis currently tests:
 
 - If the project files are styled respecting official golang style guidelines (by using `gofmt`).
 - If the project tests are running successfully
+
+Travis also uploads the updated code coverage report to [codecov.io](codecov.io).
