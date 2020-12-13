@@ -22,8 +22,10 @@ Follows a visual representation of the communication between these services:
 ![Representation of the flow of information in the system communication.](assets/architecture.png)
 
 For now, the system can be started using the [docker-compose](docker-compose.yml).
-All communication between the services is done via HTTP, using a single docker network "maratona-net".
-TODO: agora temos duas redes né
+The communication between the services is done via HTTP, using two docker networks:
+
+- "maratona-net" supports general purpose communication between the Verdict, Compiler, Executor, Orchestrator and ORM.
+- "database-net", on the other hand, only supports database-related communication, between the ORM and the Postgres database.
 
 ## Submissions Database
 
