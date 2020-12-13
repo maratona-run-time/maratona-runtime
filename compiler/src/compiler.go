@@ -38,7 +38,6 @@ func Compile(compiler string, fileName string, logger zerolog.Logger) (string, e
 		return "", execErr
 	}
 
-	// Adiciona o Shebang
 	if shebang, ok := shebangDict[compiler]; ok {
 		code, readErr := ioutil.ReadFile("program.out")
 		if readErr != nil {
