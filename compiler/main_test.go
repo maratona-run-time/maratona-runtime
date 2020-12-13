@@ -52,6 +52,8 @@ func cleanUp() {
 }
 
 func TestCompilerServer(t *testing.T) {
+	t.Cleanup(cleanUp)
+
 	tests := []struct {
 		name           string
 		language       string
@@ -121,7 +123,6 @@ func TestCompilerServer(t *testing.T) {
 
 			r, w, err := os.Pipe()
 			if err != nil {
-				cleanUp()
 				t.Error("could not create pipe")
 			}
 
@@ -132,21 +133,17 @@ func TestCompilerServer(t *testing.T) {
 			}
 			err = cmd.Run()
 			if err != nil {
-				cleanUp()
 				t.Error("could not run executable")
 			}
 			w.Close()
 			out, err := ioutil.ReadAll(r)
 			if err != nil {
-				cleanUp()
 				t.Error("could not read executable output")
 			}
 
 			if string(out) != test.expectedOutput {
-				cleanUp()
 				t.Errorf("expected output to be %v, got %v", test.expectedOutput, string(out))
 			}
 		})
 	}
-	cleanUp()
 }

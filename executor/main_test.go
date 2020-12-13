@@ -61,7 +61,6 @@ func createRequest(t *testing.T, filePath string, inputPaths []string) *http.Req
 }
 
 func cleanUp() {
-
 	dir, err := ioutil.ReadDir("inputs")
 	if err != nil {
 		log.Error().
@@ -79,6 +78,8 @@ func cleanUp() {
 }
 
 func TestExecutorServer(t *testing.T) {
+	t.Cleanup(cleanUp)
+
 	tests := []struct {
 		name           string
 		filePath       string
@@ -184,32 +185,26 @@ func TestExecutorServer(t *testing.T) {
 			res := httptest.NewRecorder()
 			m.ServeHTTP(res, req)
 			if res.Code != test.expectedStatus {
-				cleanUp()
 				t.Errorf("expected status %v, got %v", test.expectedStatus, res.Code)
 			}
 			if res.Code != http.StatusOK {
-				cleanUp()
 				return
 			}
 
 			jsonResult, err := ioutil.ReadAll(res.Body)
 			if err != nil {
-				cleanUp()
 				t.Errorf("could not read request response: %v", err.Error())
 			}
 			var results []model.ExecutionResult
 			err = json.Unmarshal(jsonResult, &results)
 			if err != nil {
-				cleanUp()
 				t.Errorf("could not unmarshall execution result: %v", err.Error())
 			}
 			for i, result := range results {
 				if !resultEqual(result, test.expectedResult[i]) {
-					cleanUp()
 					t.Errorf("expected %v, got %v", test.expectedResult[i], result)
 				}
 			}
 		})
 	}
-	cleanUp()
 }
