@@ -2,11 +2,14 @@ package compiler
 
 import (
 	"fmt"
-	"github.com/rs/zerolog"
 	"io/ioutil"
 	"os/exec"
+
+	"github.com/rs/zerolog"
 )
 
+// Compile takes a filename, a string identifiying the compiler/interpreter to be used and
+// executes the apropriate compilation step. Returns the compiled program filename.
 func Compile(compiler string, fileName string, logger zerolog.Logger) (string, error) {
 	compilationCommand := map[string][]string{
 		"C":      {"gcc", fileName, "-o", "program.out"},
@@ -35,7 +38,6 @@ func Compile(compiler string, fileName string, logger zerolog.Logger) (string, e
 		return "", execErr
 	}
 
-	// Adiciona o Shebang
 	if shebang, ok := shebangDict[compiler]; ok {
 		code, readErr := ioutil.ReadFile("program.out")
 		if readErr != nil {

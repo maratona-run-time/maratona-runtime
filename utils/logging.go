@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-//InitDummyLogger creates a dummy logger to be used in tests
+// InitDummyLogger creates a dummy logger to be used in tests.
 func InitDummyLogger() zerolog.Logger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	consoleWriter := zerolog.ConsoleWriter{Out: ioutil.Discard}
@@ -16,7 +16,7 @@ func InitDummyLogger() zerolog.Logger {
 	return logger
 }
 
-//InitLogger creates and configures a logger to be used in a specific container
+// InitLogger creates and configures a logger to be used in a specific container.
 func InitLogger(containerName string) (zerolog.Logger, *os.File) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout}

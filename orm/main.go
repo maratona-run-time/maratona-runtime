@@ -9,11 +9,12 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
 
-	model "github.com/maratona-run-time/Maratona-Runtime/model"
-	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
+	"github.com/maratona-run-time/Maratona-Runtime/model"
+	orm "github.com/maratona-run-time/Maratona-Runtime/orm/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
 
+// ChallengeForm is a struct for receiving input and output files for a challenge via HTTP.
 type ChallengeForm struct {
 	Title       string                  `form:"title"`
 	TimeLimit   int                     `form:"timeLimit"`

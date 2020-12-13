@@ -10,8 +10,8 @@ import (
 	"net/http"
 
 	"github.com/go-martini/martini"
-	model "github.com/maratona-run-time/Maratona-Runtime/model"
-	utils "github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/maratona-run-time/Maratona-Runtime/model"
+	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 )
 

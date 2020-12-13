@@ -11,12 +11,13 @@ import (
 	"github.com/go-martini/martini"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
-	"github.com/maratona-run-time/Maratona-Runtime/verdict/src"
+	verdict "github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 	"github.com/martini-contrib/binding"
 )
 
 var compilationError = errors.New("Compilation Error")
 
+// VerdictForm is used to represent the payload of our verdict POST requests
 type VerdictForm struct {
 	Language string                  `form:"language"`
 	Source   *multipart.FileHeader   `form:"source"`

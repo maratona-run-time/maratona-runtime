@@ -15,8 +15,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// FileForm define o tipo de dados esperado no POST.
-// Recebe um arquivo binário e um conjunto de arquivos de entrada.
+// FileForm defines the data types expected by the POST method.
+// Receives a binary file and a set of input files.
 type FileForm struct {
 	Binary *multipart.FileHeader   `form:"binary"`
 	Inputs []*multipart.FileHeader `form:"inputs"`

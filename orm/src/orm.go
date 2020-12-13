@@ -2,11 +2,12 @@ package orm
 
 import (
 	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"sync"
 
-	model "github.com/maratona-run-time/Maratona-Runtime/model"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	"github.com/maratona-run-time/Maratona-Runtime/model"
 )
 
 var db *gorm.DB = nil
@@ -34,11 +35,13 @@ func dbConnect() *gorm.DB {
 	return db
 }
 
+// CreateChallenge inserts a new challenge into the database.
 func CreateChallenge(challenge *model.Challenge) error {
 	db := dbConnect()
 	return db.Create(challenge).Error
 }
 
+// FindChallenge receives an id string and returns the corresponding Challenge struct.
 func FindChallenge(id string) (model.Challenge, error) {
 	db := dbConnect()
 	var challenge model.Challenge
@@ -46,6 +49,7 @@ func FindChallenge(id string) (model.Challenge, error) {
 	return challenge, err
 }
 
+// FindAllChallenges returns all challenges present in the database.
 func FindAllChallenges() ([]model.Challenge, error) {
 	db := dbConnect()
 	var challenges []model.Challenge
