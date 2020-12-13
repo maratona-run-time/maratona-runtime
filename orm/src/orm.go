@@ -35,7 +35,7 @@ func dbConnect() *gorm.DB {
 	return db
 }
 
-// CreateChallenge inserts a new challenge into the database
+// CreateChallenge inserts a new challenge into the database.
 func CreateChallenge(challenge *model.Challenge) error {
 	db := dbConnect()
 	return db.Create(challenge).Error
