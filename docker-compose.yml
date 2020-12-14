@@ -54,6 +54,7 @@ services:
     build:
       context: ./
       dockerfile: orm/Dockerfile
+    image: orm
     networks:
       - maratona-net
       - database-net
