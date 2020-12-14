@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mart
+  labels:
+    name: mart
+spec:
+  containers:
+  - name: verdict
+    image: verdict
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 8083
+  - name: executor
+    image: executor
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 8082
+  - name: compiler
+    image: compiler
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 8081

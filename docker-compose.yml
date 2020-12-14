@@ -6,6 +6,7 @@ services:
     build:
       context: ./
       dockerfile: orchestrator/Dockerfile
+    image: orchestrator
     networks:
       - maratona-net
   compiler:
@@ -14,6 +15,7 @@ services:
     build:
       context: ./
       dockerfile: compiler/Dockerfile
+    image: compiler
     networks:
       - maratona-net
   executor:
@@ -22,6 +24,7 @@ services:
     build:
       context: ./
       dockerfile: executor/Dockerfile
+    image: executor
     networks:
       - maratona-net
   verdict:
@@ -30,6 +33,7 @@ services:
     build:
       context: ./
       dockerfile: verdict/Dockerfile
+    image: verdict
     networks:
       - maratona-net
   postgres:

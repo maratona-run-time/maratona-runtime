@@ -1,5 +1,5 @@
 FROM golang:alpine
-EXPOSE 8080
+EXPOSE 8082
 WORKDIR /go/src/app
 RUN apk add gcc g++ python3
 COPY go.sum go.mod ./

@@ -78,5 +78,5 @@ func main() {
 	logger, logFile := utils.InitLogger("compiler")
 	defer logFile.Close()
 	m := createCompilerServer(logger)
-	m.RunOnAddr(":8080")
+	m.RunOnAddr(":8081")
 }

@@ -129,5 +129,5 @@ func main() {
 	logger, logFile := utils.InitLogger("executor")
 	defer logFile.Close()
 	m := createExecutorServer(logger)
-	m.RunOnAddr(":8080")
+	m.RunOnAddr(":8082")
 }
