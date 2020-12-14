@@ -29,7 +29,7 @@ func createTestFileField(writer *multipart.Writer, fieldName string, files []mod
 }
 
 func getChallengeInfo(challengeID string) (model.Challenge, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8080/challenge/%v", challengeID), new(bytes.Buffer))
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8084/challenge/%v", challengeID), new(bytes.Buffer))
 	if err != nil {
 		return model.Challenge{}, err
 	}
@@ -79,7 +79,7 @@ func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, 
 
 	writer.Close()
 
-	req, err := http.NewRequest("POST", "http://verdict:8080", buffer)
+	req, err := http.NewRequest("POST", "http://mart:8083", buffer)
 	if err != nil {
 		return nil, err
 	}

@@ -1,8 +1,7 @@
 FROM golang:alpine
 EXPOSE 8081
 WORKDIR /go/src/app
-RUN apk add g++
-RUN apk add gcc
+RUN apk add g++ gcc
 COPY go.sum go.mod ./
 RUN go mod download
 COPY utils/ utils/

@@ -11,7 +11,7 @@ spec:
     imagePullPolicy: IfNotPresent
     resources:
       limits:
-        memory: "512Mi"
+        memory: "700Mi"
         cpu: "300m"
     ports:
       - containerPort: 8083
@@ -20,7 +20,7 @@ spec:
     imagePullPolicy: IfNotPresent
     resources:
       limits:
-        memory: "512Mi"
+        memory: "700Mi"
         cpu: "300m"
     ports:
       - containerPort: 8082
@@ -29,7 +29,7 @@ spec:
     imagePullPolicy: IfNotPresent
     resources:
       limits:
-        memory: "512Mi"
+        memory: "700Mi"
         cpu: "300m"
     ports:
       - containerPort: 8081

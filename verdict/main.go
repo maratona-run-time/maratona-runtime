@@ -43,7 +43,6 @@ func handleCompiling(language string, source *multipart.FileHeader) ([]byte, err
 
 	writer.Close()
 
-	//req, err := http.NewRequest("POST", "http://compiler:8080", buffer)
 	req, err := http.NewRequest("POST", "http://localhost:8081", buffer)
 	if err != nil {
 		return nil, err
@@ -86,7 +85,6 @@ func handleExecute(binaryFilePath string, inputs []*multipart.FileHeader) ([]mod
 
 	writer.Close()
 
-	//req, err := http.NewRequest("POST", "http://executor:8080", buffer)
 	req, err := http.NewRequest("POST", "http://localhost:8082", buffer)
 	if err != nil {
 		return nil, err
