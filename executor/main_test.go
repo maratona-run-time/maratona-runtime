@@ -60,7 +60,7 @@ func createRequest(t *testing.T, filePath string, inputPaths []string) *http.Req
 	return req
 }
 
-func cleanUp() {
+func cleanUp(t *testing.T) {
 	dir, err := ioutil.ReadDir("inputs")
 	if err != nil {
 		log.Error().
@@ -68,7 +68,7 @@ func cleanUp() {
 			Msg("Error reading the contents of the 'inputs' directory")
 	}
 	for _, d := range dir {
-		err = os.Remove(path.Join([]string{"inputs", d.Name()}...))
+		err = os.Remove(path.Join("inputs", d.Name()))
 		if err != nil {
 			log.Error().
 				Err(err).
@@ -78,7 +78,20 @@ func cleanUp() {
 }
 
 func TestExecutorServer(t *testing.T) {
-	t.Cleanup(cleanUp)
+	t.Cleanup(
+		func() {
+			dir, err := ioutil.ReadDir("inputs")
+			if err != nil {
+				log.Error().Err(err).Msg("Error reading the contents of the 'inputs' directory")
+			}
+			for _, d := range dir {
+				err = os.Remove(path.Join("inputs", d.Name()))
+				if err != nil {
+					log.Error().Err(err).Msg("Error deleting file " + d.Name())
+					t.Fail()
+				}
+			}
+		})
 
 	tests := []struct {
 		name           string
