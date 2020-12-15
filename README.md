@@ -87,3 +87,7 @@ Travis currently tests:
 - If the project tests are running successfully
 
 Travis also uploads the updated code coverage report to [codecov.io](codecov.io).
+
+## Tasks and Organization
+
+The developers organized the development tasks on a [Trello Kanban](https://trello.com/b/tZnrTevw/kanban) (in portuguese).
