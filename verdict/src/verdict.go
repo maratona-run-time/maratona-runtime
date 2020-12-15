@@ -35,6 +35,13 @@ func Judge(result []model.ExecutionResult, outputs map[string]*multipart.FileHea
 		}
 		defer expectedOutputContent.Close()
 		byteExpectedOutput, err := ioutil.ReadAll(expectedOutputContent)
+		if err != nil {
+			msg := "Failed judgment\nAn error occurred while trying to read the expected output"
+			logger.Error().
+				Err(err).
+				Msg(msg)
+			return "", fmt.Errorf(msg)
+		}
 		expectedOutput := string(byteExpectedOutput)
 		if compare(testExecution.Message, expectedOutput) == false {
 			logger.Info().Msg("Judgment finished sentence Wrong Answer")
