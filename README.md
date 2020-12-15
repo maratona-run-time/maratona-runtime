@@ -3,6 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/maratona-run-time/Maratona-Runtime?readme=expanded.svg)](https://pkg.go.dev/github.com/maratona-run-time/Maratona-Runtime?readme=expanded)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maratona-run-time/Maratona-Runtime)](https://goreportcard.com/report/github.com/maratona-run-time/Maratona-Runtime)
 [![codecov](https://codecov.io/gh/maratona-run-time/Maratona-Runtime/branch/master/graph/badge.svg?token=G1GDE2TBXU)](https://codecov.io/gh/maratona-run-time/Maratona-Runtime)
+[![Maintainability](https://api.codeclimate.com/v1/badges/b4d5cb940795135cca45/maintainability)](https://codeclimate.com/github/maratona-run-time/Maratona-Runtime/maintainability)
 
 Maratona Runtime implements the core service of judging solutions for ICPC and CTF-related coding competitions.
 
@@ -33,6 +34,8 @@ The communication between the services is done via HTTP, using two docker networ
 ### Using Kubernetes
 
 Initially, run `docker-compose build` to make sure your machine has the project images.
+
+Another possibility is pulling the docker images from our [DockerHub registry](https://hub.docker.com/orgs/mruntime).
 
 Then, to deploy the project run:
 
@@ -84,3 +87,7 @@ Travis currently tests:
 - If the project tests are running successfully
 
 Travis also uploads the updated code coverage report to [codecov.io](codecov.io).
+
+## Tasks and Organization
+
+The developers organized the development tasks on a [Trello Kanban](https://trello.com/b/tZnrTevw/kanban) (in portuguese).
