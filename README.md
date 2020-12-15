@@ -3,6 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/maratona-run-time/Maratona-Runtime?readme=expanded.svg)](https://pkg.go.dev/github.com/maratona-run-time/Maratona-Runtime?readme=expanded)
 [![Go Report Card](https://goreportcard.com/badge/github.com/maratona-run-time/Maratona-Runtime)](https://goreportcard.com/report/github.com/maratona-run-time/Maratona-Runtime)
 [![codecov](https://codecov.io/gh/maratona-run-time/Maratona-Runtime/branch/master/graph/badge.svg?token=G1GDE2TBXU)](https://codecov.io/gh/maratona-run-time/Maratona-Runtime)
+[![Maintainability](https://api.codeclimate.com/v1/badges/b4d5cb940795135cca45/maintainability)](https://codeclimate.com/github/maratona-run-time/Maratona-Runtime/maintainability)
 
 Maratona Runtime implements the core service of judging solutions for ICPC and CTF-related coding competitions.
 
