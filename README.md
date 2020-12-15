@@ -21,11 +21,25 @@ Follows a visual representation of the communication between these services:
 
 ![Representation of the flow of information in the system communication.](assets/architecture.png)
 
-For now, the system can be started using the [docker-compose](docker-compose.yml).
+For now, the system can be started using the [docker-compose](docker-compose.yml) and Kubernetes.
+
+### Using docker-compose
+
 The communication between the services is done via HTTP, using two docker networks:
 
 - "maratona-net" supports general purpose communication between the Verdict, Compiler, Executor, Orchestrator and ORM.
 - "database-net", on the other hand, only supports database-related communication, between the ORM and the Postgres database.
+
+### Using Kubernetes
+
+Initially, run `docker-compose build` to make sure your machine has the project images.
+
+Then, to deploy the project run:
+
+```bash
+
+kubectl create -f k8s/
+```
 
 ## Submissions Database
 
