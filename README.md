@@ -35,6 +35,8 @@ The communication between the services is done via HTTP, using two docker networ
 
 Initially, run `docker-compose build` to make sure your machine has the project images.
 
+Another possibility is pulling the docker images from our [DockerHub registry](https://hub.docker.com/orgs/mruntime).
+
 Then, to deploy the project run:
 
 ```bash
