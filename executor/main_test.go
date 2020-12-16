@@ -71,7 +71,7 @@ func TestExecutorServer(t *testing.T) {
 				err = os.Remove(path.Join("inputs", d.Name()))
 				if err != nil {
 					log.Error().Err(err).Msg("Error deleting file " + d.Name())
-					t.Fail()
+					t.FailNow()
 				}
 			}
 		})
