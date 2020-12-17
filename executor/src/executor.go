@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/maratona-run-time/Maratona-Runtime/model"
@@ -68,7 +69,11 @@ func Execute(path string,
 			logger.Debug().Msg("Run time error")
 			return res
 		case out := <-output:
-			res = append(res, model.ExecutionResult{inputFileName, "OK", string(out)})
+			if string(out) == "Memory limit exceeded" {
+				res = append(res, model.ExecutionResult{inputFileName, "MLE", string(out)})
+			} else {
+				res = append(res, model.ExecutionResult{inputFileName, "OK", string(out)})
+			}
 		}
 	}
 	logger.Debug().Msg("Executions finished")
@@ -79,9 +84,16 @@ func execute(ctx context.Context, executable string, inputFile *os.File, output 
 	cmd := exec.CommandContext(ctx, executable)
 	cmd.Stdin = inputFile
 	programOutput, err := cmd.Output()
+
 	if err != nil {
 		errorOutput <- err
 		return
 	}
-	output <- programOutput
+	// This command may be in kilobytes or in bytes depending on operating system
+	memoryUsageMb := cmd.ProcessState.SysUsage().(*syscall.Rusage).Maxrss / 1024
+	if memoryUsageMb >= 16 {
+		output <- []byte("Memory limit exceeded")
+	} else {
+		output <- programOutput
+	}
 }

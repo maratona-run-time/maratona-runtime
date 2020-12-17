@@ -33,3 +33,11 @@ func TestExecuteRTE(t *testing.T) {
 		t.Errorf("Expected status RLE but got %s", status[0].Status)
 	}
 }
+
+func TestExecuteMLE(t *testing.T) {
+	logger := utils.InitDummyLogger()
+	status := Execute("./tests/mle.sh", "../../verdict/src/tests/sum/inputs", 1.0, logger)
+	if status[0].Status != "MLE" {
+		t.Errorf("Expected status MLE but got %s", status[0].Status)
+	}
+}
