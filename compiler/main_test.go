@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/rs/zerolog/log"
 )
 
 func createRequestForm(writer *multipart.Writer, language, filePath string) error {
@@ -41,8 +42,18 @@ func createRequest(t *testing.T, language, filePath string) *http.Request {
 
 	return req
 }
+func cleanUp() {
+	errRem := os.Remove("executable")
+	if errRem != nil {
+		log.Error().
+			Err(errRem).
+			Msg("Error removing 'executable'")
+	}
+}
 
 func TestCompilerServer(t *testing.T) {
+	t.Cleanup(cleanUp)
+
 	tests := []struct {
 		name           string
 		language       string
