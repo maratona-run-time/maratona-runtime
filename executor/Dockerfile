@@ -9,6 +9,6 @@ RUN go build executor/main.go
 
 FROM alpine
 WORKDIR /go/src/app
-RUN apk add go gcc g++ python3
+RUN apk add binutils python3
 COPY --from=build /go/src/app/main .
 CMD ["./main"]
