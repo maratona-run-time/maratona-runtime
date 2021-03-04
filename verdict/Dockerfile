@@ -1,9 +1,13 @@
-FROM golang:alpine
-EXPOSE 8080
+FROM golang:alpine AS build
 WORKDIR /go/src/app
 COPY go.sum go.mod ./
 RUN go mod download
 COPY model/ model/
 COPY utils/ utils/
 COPY verdict/ verdict/
-CMD ["go", "run", "verdict/main.go"]
+RUN go build verdict/main.go
+
+FROM alpine
+WORKDIR /go/src/app
+COPY --from=build /go/src/app/main .
+CMD ["./main"]

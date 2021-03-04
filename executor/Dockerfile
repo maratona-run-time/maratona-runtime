@@ -1,10 +1,14 @@
-FROM golang:alpine
-EXPOSE 8080
+FROM golang:alpine AS build
 WORKDIR /go/src/app
-RUN apk add gcc g++ python3
 COPY go.sum go.mod ./
 RUN go mod download
 COPY model/ model/
 COPY utils/ utils/
 COPY executor/ executor/
-CMD ["go", "run", "executor/main.go"]
+RUN go build executor/main.go
+
+FROM alpine
+WORKDIR /go/src/app
+RUN apk add binutils python3
+COPY --from=build /go/src/app/main .
+CMD ["./main"]
