@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: orchestrator
-        image: orchestrator
+        image: mruntime/orchestrator
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: orm
-        image: orm
+        image: mruntime/orm
         imagePullPolicy: IfNotPresent
         resources:
           limits:

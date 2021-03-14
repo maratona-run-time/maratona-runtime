@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: verdict
-    image: verdict
+    image: mruntime/verdict
     imagePullPolicy: IfNotPresent
     resources:
       limits:
@@ -16,7 +16,7 @@ spec:
     ports:
       - containerPort: 8083
   - name: executor
-    image: executor
+    image: mruntime/executor
     imagePullPolicy: IfNotPresent
     resources:
       limits:
@@ -25,7 +25,7 @@ spec:
     ports:
       - containerPort: 8082
   - name: compiler
-    image: compiler
+    image: mruntime/compiler
     imagePullPolicy: IfNotPresent
     resources:
       limits:
