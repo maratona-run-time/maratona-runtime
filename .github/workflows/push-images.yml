@@ -16,8 +16,8 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - uses: actions/checkout@v2
     - name: Builds docker images
-      uses: actions/checkout@v2
       run: docker-compose build
     - run: docker tag compiler mruntime/compiler
     - run: docker push mruntime/compiler
