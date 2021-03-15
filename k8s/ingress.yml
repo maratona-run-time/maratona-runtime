@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: mart-ingress
+    annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+    rules:
+        - host: mart-route
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: mart
+                            port:
+                                number: 8083
+
