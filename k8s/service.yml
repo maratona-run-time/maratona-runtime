@@ -34,7 +34,29 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mart
+  name: mart-compiler
+spec:
+  selector:
+    name: mart
+  ports:
+  - port: 8081
+    targetPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mart-executor
+spec:
+  selector:
+    name: mart
+  ports:
+  - port: 8082
+    targetPort: 8082
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mart-verdict
 spec:
   selector:
     name: mart

@@ -4,6 +4,7 @@ metadata:
   name: mart
   labels:
     name: mart
+    app: mart
 spec:
   containers:
   - name: verdict

@@ -9,11 +9,24 @@ spec:
         - host: mart-route
           http:
               paths:
-                  - path: /
+                  - path: /compiler
                     pathType: Prefix
                     backend:
                         service:
-                            name: mart
+                            name: mart-compiler
+                            port:
+                                number: 8081
+                  - path: /executor
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: mart-executor
+                            port:
+                                number: 8082
+                  - path: /verdict
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: mart-verdict
                             port:
                                 number: 8083
-
