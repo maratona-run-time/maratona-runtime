@@ -63,6 +63,40 @@ func createOrmServer() *martini.ClassicMartini {
 		writeChallenge(rs, challenge)
 	})
 
+	m.Put("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
+		id := params["id"]
+		challenge, err := orm.FindChallenge(id)
+
+		challenge.Title = f.Title
+		challenge.TimeLimit = f.TimeLimit
+		challenge.MemoryLimit = f.MemoryLimit
+
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id)+" to update", err)
+			return
+		}
+		inputsArray, err := parseRequestFiles(f.Inputs)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
+			return
+		}
+		challenge.Inputs = inputsArray
+
+		outputsArray, err := parseRequestFiles(f.Outputs)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
+			return
+		}
+		challenge.Outputs = outputsArray
+
+		err = orm.UpdateChallenge(challenge)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to update challenge", err)
+			return
+		}
+		writeChallenge(rs, challenge)
+	})
+
 	m.Post("/challenge", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm) {
 		inputsArray, err := parseRequestFiles(f.Inputs)
 		if err != nil {
@@ -81,6 +115,16 @@ func createOrmServer() *martini.ClassicMartini {
 			return
 		}
 		writeChallenge(rs, challenge)
+	})
+
+	m.Delete("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
+		id := params["id"]
+		err := orm.DeleteChallenge(id)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id)+" to update", err)
+			return
+		}
+		utils.WriteResponse(rs, http.StatusNoContent, "Successfully deleted", nil)
 	})
 	return m
 }

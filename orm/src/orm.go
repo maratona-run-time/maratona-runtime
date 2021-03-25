@@ -49,6 +49,18 @@ func FindChallenge(id string) (model.Challenge, error) {
 	return challenge, err
 }
 
+// UpdateChallenge receives an existing Challenge object and updates its value on the database.
+func UpdateChallenge(challenge model.Challenge) error {
+	db := dbConnect()
+	return db.Save(&challenge).Error
+}
+
+// DeleteChallenge receives an id string and deletes the corresponding Challenge from the database.
+func DeleteChallenge(id string) error {
+	db := dbConnect()
+	return db.Delete(&model.Challenge{}, id).Error
+}
+
 // FindAllChallenges returns all challenges present in the database.
 func FindAllChallenges() ([]model.Challenge, error) {
 	db := dbConnect()
