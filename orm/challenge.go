@@ -73,19 +73,19 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 		challenge.TimeLimit = f.TimeLimit
 		challenge.MemoryLimit = f.MemoryLimit
 
-		inputsArray, err := parseRequestFiles(f.Inputs)
+		files, err := parseRequestFiles(f.Inputs)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
 			return
 		}
-		challenge.Inputs = inputsArray
+		challenge.Inputs = (model.TestFileArray)(files).InputFiles()
 
-		outputsArray, err := parseRequestFiles(f.Outputs)
+		files, err = parseRequestFiles(f.Outputs)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 			return
 		}
-		challenge.Outputs = outputsArray
+		challenge.Outputs = (model.TestFileArray)(files).OutputFiles()
 
 		err = orm.UpdateChallenge(challenge)
 		if err != nil {

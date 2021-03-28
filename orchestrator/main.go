@@ -67,12 +67,12 @@ func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, 
 		return nil, err
 	}
 
-	err = createTestFileField(writer, "inputs", challenge.Inputs)
+	err = createTestFileField(writer, "inputs", (model.InputsArray)(challenge.Inputs).TestFiles())
 	if err != nil {
 		return nil, err
 	}
 
-	err = createTestFileField(writer, "outputs", challenge.Outputs)
+	err = createTestFileField(writer, "outputs", (model.OutputsArray)(challenge.Outputs).TestFiles())
 	if err != nil {
 		return nil, err
 	}

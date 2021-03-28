@@ -25,7 +25,10 @@ func dbConnect() *gorm.DB {
 		if db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}); err != nil {
 			panic(err)
 		}
-		if err = db.AutoMigrate(&model.TestFile{}); err != nil {
+		if err = db.AutoMigrate(&model.InputFile{}); err != nil {
+			panic(err)
+		}
+		if err = db.AutoMigrate(&model.OutputFile{}); err != nil {
 			panic(err)
 		}
 		if err = db.AutoMigrate(&model.Challenge{}); err != nil {
