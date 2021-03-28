@@ -120,7 +120,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 				utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
 				return
 			}
-			challenge.Inputs = inputsArray
+			challenge.Inputs = (model.TestFileArray)(inputsArray).InputFiles()
 		}
 
 		if len(f.Outputs) > 0 {
@@ -129,7 +129,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 				utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 				return
 			}
-			challenge.Outputs = outputsArray
+			challenge.Outputs = (model.TestFileArray)(outputsArray).OutputFiles()
 		}
 
 		err = orm.UpdateChallenge(challenge)
@@ -151,7 +151,9 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 			return
 		}
-		challenge := model.Challenge{Title: f.Title, TimeLimit: f.TimeLimit, MemoryLimit: f.MemoryLimit, Inputs: inputsArray, Outputs: outputsArray}
+		inputs := (model.TestFileArray)(inputsArray).InputFiles()
+		outputs := (model.TestFileArray)(outputsArray).OutputFiles()
+		challenge := model.Challenge{Title: f.Title, TimeLimit: f.TimeLimit, MemoryLimit: f.MemoryLimit, Inputs: inputs, Outputs: outputs}
 		err = orm.CreateChallenge(&challenge)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to create challenge", err)
