@@ -28,7 +28,7 @@ func createTestFileField(writer *multipart.Writer, fieldName string, files []mod
 	return nil
 }
 
-func getChallengeInfo(challengeID string) (model.Challenge, error) {
+func getChallengeInfo(challengeID uint) (model.Challenge, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8084/challenge/%v", challengeID), new(bytes.Buffer))
 	if err != nil {
 		return model.Challenge{}, err

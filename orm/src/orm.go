@@ -31,6 +31,9 @@ func dbConnect() *gorm.DB {
 		if err = db.AutoMigrate(&model.Challenge{}); err != nil {
 			panic(err)
 		}
+		if err = db.AutoMigrate(&model.Submission{}); err != nil {
+			panic(err)
+		}
 	})
 	return db
 }
@@ -41,8 +44,8 @@ func CreateChallenge(challenge *model.Challenge) error {
 	return db.Create(challenge).Error
 }
 
-// FindChallenge receives an id string and returns the corresponding Challenge struct.
-func FindChallenge(id string) (model.Challenge, error) {
+// FindChallenge receives an id and returns the corresponding Challenge struct.
+func FindChallenge(id uint) (model.Challenge, error) {
 	db := dbConnect()
 	var challenge model.Challenge
 	err := db.Preload("Inputs").Preload("Outputs").First(&challenge, id).Error
@@ -55,4 +58,9 @@ func FindAllChallenges() ([]model.Challenge, error) {
 	var challenges []model.Challenge
 	err := db.Preload("Inputs").Preload("Outputs").Find(&challenges).Error
 	return challenges, err
+}
+
+func CreateSubmission(submission *model.Submission) error {
+	db := dbConnect()
+	return db.Create(submission).Error
 }
