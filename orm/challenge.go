@@ -22,14 +22,14 @@ type ChallengeForm struct {
 	Outputs     []*multipart.FileHeader `form:"outputs"`
 }
 
-func writeChallenge(rs http.ResponseWriter, challenge model.Challenge) {
-	jsonChallenge, err := json.Marshal(challenge)
+func writeJSONResponse(rs http.ResponseWriter, response interface{}) {
+	jsonResponse, err := json.Marshal(response)
 	if err != nil {
-		utils.WriteResponse(rs, http.StatusInternalServerError, "Error parsing challenge to JSON", err)
+		utils.WriteResponse(rs, http.StatusInternalServerError, "Error parsing response to JSON", err)
 		return
 	}
 	rs.Header().Set("Content-Type", "application/json")
-	rs.Write(jsonChallenge)
+	rs.Write(jsonResponse)
 }
 
 func parseRequestFiles(files []*multipart.FileHeader) ([]model.TestFile, error) {
@@ -50,6 +50,15 @@ func parseRequestFiles(files []*multipart.FileHeader) ([]model.TestFile, error) 
 }
 
 func setChallengeRoutes(m *martini.ClassicMartini) {
+	m.Get("/challenge", func(rs http.ResponseWriter, rq *http.Request) {
+		challenges, err := orm.FindAllChallenges()
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find all challenges", err)
+			return
+		}
+		writeJSONResponse(rs, challenges)
+	})
+
 	m.Get("/challenge/:id", func(rs http.ResponseWriter, rq *http.Request, params martini.Params) {
 		id := params["id"]
 		challenge, err := orm.FindChallenge(id)
@@ -57,7 +66,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id), err)
 			return
 		}
-		writeChallenge(rs, challenge)
+		writeJSONResponse(rs, challenge)
 	})
 
 	m.Put("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
@@ -92,7 +101,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to update challenge", err)
 			return
 		}
-		writeChallenge(rs, challenge)
+		writeJSONResponse(rs, challenge)
 	})
 
 	m.Patch("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
@@ -137,7 +146,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to patch challenge", err)
 			return
 		}
-		writeChallenge(rs, challenge)
+		writeJSONResponse(rs, challenge)
 	})
 
 	m.Post("/challenge", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm) {
@@ -157,7 +166,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to create challenge", err)
 			return
 		}
-		writeChallenge(rs, challenge)
+		writeJSONResponse(rs, challenge)
 	})
 
 	m.Delete("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
