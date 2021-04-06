@@ -13,7 +13,8 @@ import (
 	"github.com/martini-contrib/binding"
 
 	"github.com/maratona-run-time/Maratona-Runtime/model"
-	orm "github.com/maratona-run-time/Maratona-Runtime/orm/src"
+	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
+	"github.com/maratona-run-time/Maratona-Runtime/queue"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
 
@@ -131,7 +132,7 @@ func createOrmServer() *martini.ClassicMartini {
 			msg := fmt.Sprintf("Could not save submission")
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, err)
 		}
-		//queue.sendMessage(submissionID)
+		queue.SendMessage(fmt.Sprint(submission.ID))
 		writeSubmission(rs, submission)
 	})
 	return m
