@@ -1,16 +1,17 @@
 package queue
 
 import (
-	"github.com/streadway/amqp"
 	"sync"
+
+	"github.com/streadway/amqp"
 )
 
-var once sync.Once
+var onceQueue, onceChannel sync.Once
 var conn *amqp.Connection = nil
 var channel *amqp.Channel = nil
 
 func queueConnect() *amqp.Connection {
-	once.Do(func() {
+	onceQueue.Do(func() {
 		var err error
 		conn, err = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
 		if err != nil {
@@ -21,7 +22,7 @@ func queueConnect() *amqp.Connection {
 }
 
 func channelConnect() *amqp.Channel {
-	once.Do(func() {
+	onceChannel.Do(func() {
 		conn := queueConnect()
 		var err error
 		channel, err = conn.Channel()
@@ -29,6 +30,7 @@ func channelConnect() *amqp.Channel {
 			panic(err)
 		}
 	})
+
 	return channel
 }
 
@@ -52,9 +54,9 @@ func SendMessage(body string) error {
 	ch := channelConnect()
 	q := getSubmissionQueue()
 	err := ch.Publish(
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
+		"",
+		q.Name,
+		false,
 		false,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,

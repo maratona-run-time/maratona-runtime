@@ -132,7 +132,11 @@ func createOrmServer() *martini.ClassicMartini {
 			msg := fmt.Sprintf("Could not save submission")
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, err)
 		}
-		queue.SendMessage(fmt.Sprint(submission.ID))
+		err = queue.SendMessage(fmt.Sprint(submission.ID))
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to queue submission ID", err)
+			return
+		}
 		writeSubmission(rs, submission)
 	})
 	return m

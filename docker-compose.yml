@@ -61,7 +61,8 @@ services:
   rabbitmq:
     ports:
       - "5672:5672"
-    image: "rabbitmq:alpine"
+      - "15672:15672"
+    image: "rabbitmq:management-alpine"
     networks:
       - maratona-net
 networks: 
