@@ -64,3 +64,11 @@ func CreateSubmission(submission *model.Submission) error {
 	db := dbConnect()
 	return db.Create(submission).Error
 }
+
+// FindSubmission receives an id and returns the corresponding Submission struct.
+func FindSubmission(id uint) (model.Submission, error) {
+	db := dbConnect()
+	var submission model.Submission
+	err := db.First(&submission, id).Error
+	return submission, err
+}

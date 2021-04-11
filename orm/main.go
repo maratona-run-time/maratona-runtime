@@ -139,6 +139,20 @@ func createOrmServer() *martini.ClassicMartini {
 		}
 		writeSubmission(rs, submission)
 	})
+
+	m.Get("/submission/:id", func(rs http.ResponseWriter, rq *http.Request, params martini.Params) {
+		id, err := strconv.ParseUint(params["id"], 10, 64)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusBadRequest, "Submission ID "+fmt.Sprint(id)+" must be a number", err)
+			return
+		}
+		submission, err := orm.FindSubmission(uint(id))
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find submission with id "+fmt.Sprint(id), err)
+			return
+		}
+		writeSubmission(rs, submission)
+	})
 	return m
 }
 
