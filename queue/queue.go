@@ -65,3 +65,20 @@ func SendMessage(body string) error {
 		})
 	return err
 }
+
+func GetQueueChannel(queueName string) <-chan amqp.Delivery {
+	ch := channelConnect()
+	msgs, err := ch.Consume(
+		queueName,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return msgs
+}
