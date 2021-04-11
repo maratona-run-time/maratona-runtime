@@ -76,7 +76,7 @@ func parseTestFiles(files []*multipart.FileHeader) ([]model.TestFile, error) {
 
 func challengeExists(challengeID uint) bool {
 	_, err := orm.FindChallenge(challengeID)
-	return err != nil
+	return err == nil
 }
 
 func createOrmServer() *martini.ClassicMartini {
@@ -117,7 +117,7 @@ func createOrmServer() *martini.ClassicMartini {
 	})
 
 	m.Post("/submit", binding.MultipartForm(model.SubmissionForm{}), func(rs http.ResponseWriter, rq *http.Request, form model.SubmissionForm) {
-		if challengeExists(form.ChallengeID) {
+		if !challengeExists(form.ChallengeID) {
 			msg := fmt.Sprintf("Could not find challenge %v", form.ChallengeID)
 			utils.WriteResponse(rs, http.StatusNotFound, msg, challengeNotFound)
 		}
