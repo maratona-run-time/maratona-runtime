@@ -7,35 +7,45 @@ import (
 )
 
 var onceQueue, onceChannel sync.Once
+var queueError, channelError error
 var conn *amqp.Connection = nil
 var channel *amqp.Channel = nil
 
-func queueConnect() *amqp.Connection {
+func queueConnect() (*amqp.Connection, error) {
 	onceQueue.Do(func() {
-		var err error
-		conn, err = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
-		if err != nil {
-			panic(err)
+		conn, queueError = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+		if queueError != nil {
+			return
 		}
 	})
-	return conn
+	if queueError != nil {
+		onceQueue = sync.Once{}
+	}
+	return conn, queueError
 }
 
-func channelConnect() *amqp.Channel {
+func channelConnect() (*amqp.Channel, error) {
 	onceChannel.Do(func() {
-		conn := queueConnect()
-		var err error
-		channel, err = conn.Channel()
-		if err != nil {
-			panic(err)
+		conn, channelError = queueConnect()
+		if channelError != nil {
+			return
+		}
+		channel, channelError = conn.Channel()
+		if channelError != nil {
+			return
 		}
 	})
-
-	return channel
+	if channelError != nil {
+		onceChannel = sync.Once{}
+	}
+	return channel, channelError
 }
 
-func getSubmissionQueue() amqp.Queue {
-	ch := channelConnect()
+func getSubmissionQueue() (amqp.Queue, error) {
+	ch, err := channelConnect()
+	if err != nil {
+		return amqp.Queue{}, err
+	}
 	queue, err := ch.QueueDeclare(
 		"submissions", // name
 		true,          // durable
@@ -44,16 +54,19 @@ func getSubmissionQueue() amqp.Queue {
 		false,         // no-wait
 		nil,           // arguments
 	)
-	if err != nil {
-		panic(err)
-	}
-	return queue
+	return queue, err
 }
 
 func SendMessage(body string) error {
-	ch := channelConnect()
-	q := getSubmissionQueue()
-	err := ch.Publish(
+	ch, err := channelConnect()
+	if err != nil {
+		return err
+	}
+	q, err := getSubmissionQueue()
+	if err != nil {
+		return err
+	}
+	err = ch.Publish(
 		"",
 		q.Name,
 		false,
@@ -66,8 +79,11 @@ func SendMessage(body string) error {
 	return err
 }
 
-func GetQueueChannel(queueName string) <-chan amqp.Delivery {
-	ch := channelConnect()
+func GetQueueChannel(queueName string) (<-chan amqp.Delivery, error) {
+	ch, err := channelConnect()
+	if err != nil {
+		return nil, err
+	}
 	msgs, err := ch.Consume(
 		queueName,
 		"",
@@ -77,8 +93,5 @@ func GetQueueChannel(queueName string) <-chan amqp.Delivery {
 		false,
 		nil,
 	)
-	if err != nil {
-		panic(err)
-	}
-	return msgs
+	return msgs, err
 }

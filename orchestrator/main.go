@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-martini/martini"
 	"github.com/maratona-run-time/Maratona-Runtime/model"
@@ -196,29 +197,32 @@ func main() {
 		rs.Write(verdictResponse)
 	})
 
-	m.Post("/run", func(rs http.ResponseWriter, rq *http.Request) {
-		msgs := queue.GetQueueChannel("submissions")
-		for queueMessage := range msgs {
-			idString := string(queueMessage.Body)
-			id, err := strconv.ParseUint(idString, 10, 64)
-			if err != nil {
-				panic(err)
-			}
-			submission, err := getSubmissionInfo(uint(id))
-			if err != nil {
-				panic(err)
-			}
-			challenge, err := getChallengeInfo(submission.ChallengeID)
-			if err != nil {
-				panic(err)
-			}
-			verdictResponse, err := callVerdictSubmission(challenge, submission)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(verdictResponse)
+	msgs, err := queue.GetQueueChannel("submissions")
+	for err != nil {
+		fmt.Println(err)
+		msgs, err = queue.GetQueueChannel("submissions")
+		time.Sleep(2 * time.Second)
+	}
+	for queueMessage := range msgs {
+		idString := string(queueMessage.Body)
+		id, err := strconv.ParseUint(idString, 10, 64)
+		if err != nil {
+			panic(err)
 		}
-	})
+		submission, err := getSubmissionInfo(uint(id))
+		if err != nil {
+			panic(err)
+		}
+		challenge, err := getChallengeInfo(submission.ChallengeID)
+		if err != nil {
+			panic(err)
+		}
+		verdictResponse, err := callVerdictSubmission(challenge, submission)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(verdictResponse)
+	}
 
 	m.RunOnAddr(":8080")
 }
