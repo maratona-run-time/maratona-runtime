@@ -30,8 +30,8 @@ type Challenge struct {
 	Title       string
 	TimeLimit   int
 	MemoryLimit int
-	Inputs      []TestFile `gorm:"ForeignKey:ChallengeID"`
-	Outputs     []TestFile `gorm:"ForeignKey:ChallengeID"`
+	Inputs      []InputFile  `gorm:"ForeignKey:ChallengeID"`
+	Outputs     []OutputFile `gorm:"ForeignKey:ChallengeID"`
 }
 
 // TestFile represents the input of a single test case for a given challenge.
@@ -40,4 +40,54 @@ type TestFile struct {
 	Filename    string
 	Content     []byte
 	ChallengeID uint
+}
+
+type TestFileArray []TestFile
+
+func (files TestFileArray) InputFiles() []InputFile {
+	inputs := make([]InputFile, len(files))
+	for index, file := range files {
+		inputs[index] = InputFile{
+			TestFile: file,
+		}
+	}
+	return inputs
+}
+
+func (files TestFileArray) OutputFiles() []OutputFile {
+	outputs := make([]OutputFile, len(files))
+	for index, file := range files {
+		outputs[index] = OutputFile{
+			TestFile: file,
+		}
+	}
+	return outputs
+}
+
+type InputFile struct {
+	TestFile
+}
+
+type InputsArray []InputFile
+
+func (files InputsArray) TestFiles() []TestFile {
+	testFiles := make([]TestFile, len(files))
+	for index, file := range files {
+		testFiles[index] = file.TestFile
+	}
+	return testFiles
+}
+
+type OutputFile struct {
+	TestFile
+}
+
+type OutputsArray []OutputFile
+
+func (files OutputsArray) TestFiles() []TestFile {
+	testFiles := make([]TestFile, len(files))
+	for index, file := range files {
+		testFiles[index] = file.TestFile
+	}
+	return testFiles
 }
