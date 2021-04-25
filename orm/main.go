@@ -10,10 +10,11 @@ import (
 	"strconv"
 
 	"github.com/go-martini/martini"
+	"github.com/graphql-go/handler"
 	"github.com/martini-contrib/binding"
 
 	"github.com/maratona-run-time/Maratona-Runtime/model"
-	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
+	orm "github.com/maratona-run-time/Maratona-Runtime/orm/src"
 	"github.com/maratona-run-time/Maratona-Runtime/queue"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
@@ -132,7 +133,7 @@ func createOrmServer() *martini.ClassicMartini {
 			msg := fmt.Sprintf("Could not save submission")
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, err)
 		}
-		err = queue.SendMessage(fmt.Sprint(submission.ID))
+		err = queue.Submit(fmt.Sprint(submission.ID))
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to queue submission ID", err)
 			return
@@ -158,5 +159,11 @@ func createOrmServer() *martini.ClassicMartini {
 
 func main() {
 	m := createOrmServer()
+	h := handler.New(&handler.Config{
+		Schema:   &orm.Schema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+	m.Any("/graphql", h.ServeHTTP)
 	m.RunOnAddr(":8084")
 }

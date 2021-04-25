@@ -1,9 +1,11 @@
-package main
+package orm
 
 import (
+	"errors"
+	"strconv"
+
 	"github.com/graphql-go/graphql"
 
-	"github.com/maratona-run-time/Maratona-Runtime/orm/src"
 	"github.com/maratona-run-time/Maratona-Runtime/model"
 )
 
@@ -67,9 +69,46 @@ var submission = graphql.NewObject(
 				Type: challenge,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					submission := p.Source.(model.Submission)
-					return orm.FindChallenge(submission.ChallengeID)
+					return FindChallenge(submission.ChallengeID)
 				},
 			},
 		},
+	},
+)
+
+var queries = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "Query",
+		Fields: graphql.Fields{
+			"challenges": &graphql.Field{
+				Type: graphql.NewList(challenge),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					challenges, err := FindAllChallenges()
+					return challenges, err
+				},
+			},
+			"challenge": &graphql.Field{
+				Type: challenge,
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.ID,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					stringId := p.Args["id"].(string)
+					id, err := strconv.ParseUint(stringId, 10, 64)
+					if err != nil {
+						return nil, errors.New("Could not convert id field to an uint")
+					}
+					return FindChallenge(uint(id))
+				},
+			},
+		},
+	},
+)
+
+var Schema, _ = graphql.NewSchema(
+	graphql.SchemaConfig{
+		Query: queries,
 	},
 )
