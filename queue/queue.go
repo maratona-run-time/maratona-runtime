@@ -57,7 +57,7 @@ func getSubmissionQueue() (amqp.Queue, error) {
 	return queue, err
 }
 
-func SendMessage(body string) error {
+func Submit(id string) error {
 	ch, err := channelConnect()
 	if err != nil {
 		return err
@@ -74,18 +74,19 @@ func SendMessage(body string) error {
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
-			Body:         []byte(body),
+			Body:         []byte(id),
 		})
 	return err
 }
 
-func GetQueueChannel(queueName string) (<-chan amqp.Delivery, error) {
+func GetSubmissionChannel() (<-chan amqp.Delivery, error) {
 	ch, err := channelConnect()
 	if err != nil {
 		return nil, err
 	}
+	getSubmissionQueue()
 	msgs, err := ch.Consume(
-		queueName,
+		"submissions",
 		"",
 		true,
 		false,

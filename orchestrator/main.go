@@ -197,10 +197,10 @@ func main() {
 		rs.Write(verdictResponse)
 	})
 
-	msgs, err := queue.GetQueueChannel("submissions")
+	msgs, err := queue.GetSubmissionChannel()
 	for err != nil {
 		fmt.Println(err)
-		msgs, err = queue.GetQueueChannel("submissions")
+		msgs, err = queue.GetSubmissionChannel()
 		time.Sleep(2 * time.Second)
 	}
 	for queueMessage := range msgs {
