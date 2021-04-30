@@ -1,25 +1,22 @@
 # git files
 *.git
 
-# executaveis
+# executables
 *.exe
 *.bin
 *.bat
 *.out
 
-# não ignorar outputs
+# do not ignore outputs
 !**/outputs/*.out
 
 # logs
 *.log
 
-# logs
-*.log
-
-# arquivos intermediarios
+# object files
 *.o
 
-# compactados
+# compressed files
 *.zip
 *.tar
 *.gz
