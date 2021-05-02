@@ -29,7 +29,7 @@ type Challenge struct {
 	gorm.Model
 	ID          uint
 	Title       string
-	TimeLimit   int
+	TimeLimit   float32
 	MemoryLimit int
 	Inputs      []TestFile `gorm:"ForeignKey:ChallengeID"`
 	Outputs     []TestFile `gorm:"ForeignKey:ChallengeID"`

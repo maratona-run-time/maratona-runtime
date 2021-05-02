@@ -37,7 +37,7 @@ var challenge = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"timeLimit": &graphql.Field{
-				Type: graphql.Int,
+				Type: graphql.Float,
 			},
 			"memoryLimit": &graphql.Field{
 				Type: graphql.Int,
@@ -101,6 +101,22 @@ var queries = graphql.NewObject(
 						return nil, errors.New("Could not convert id field to an uint")
 					}
 					return FindChallenge(uint(id))
+				},
+			},
+			"submission": &graphql.Field{
+				Type: submission,
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.ID,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					stringId := p.Args["id"].(string)
+					id, err := strconv.ParseUint(stringId, 10, 64)
+					if err != nil {
+						return nil, errors.New("Could not convert id field to an uint")
+					}
+					return FindSubmission(uint(id))
 				},
 			},
 		},

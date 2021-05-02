@@ -4,86 +4,68 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"context"
 
 	"github.com/go-martini/martini"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	verdict "github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 	"github.com/martini-contrib/binding"
+	graphql "github.com/hasura/go-graphql-client"
 )
 
 var compilationError = errors.New("Compilation Error")
 
-// VerdictForm is used to represent the payload of our verdict POST requests
+// VerdictForm receives a submission ID
 type VerdictForm struct {
-	Language string                  `form:"language"`
-	Source   *multipart.FileHeader   `form:"source"`
-	Inputs   []*multipart.FileHeader `form:"inputs"`
-	Outputs  []*multipart.FileHeader `form:"outputs"`
+	ID string `form:"id"`
 }
 
-func handleCompiling(language string, source *multipart.FileHeader) ([]byte, error) {
+func createHeader(id string) (*bytes.Buffer, *multipart.Writer, error) {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
 
-	fieldName := "language"
-	err := utils.CreateFormField(writer, fieldName, language)
+	err := utils.CreateFormField(writer, "id", id)
 	if err != nil {
-		return nil, err
-	}
-
-	fieldName = "source"
-	err = utils.CreateFormFileFromFileHeader(writer, fieldName, source)
-	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	writer.Close()
 
+	return buffer, writer, nil
+}
+
+func handleCompiling(id string) (error) {
+	buffer, writer, err := createHeader(id)
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest("POST", "http://localhost:8081", buffer)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, compilationError
+		return compilationError
 	}
-
-	binary, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return binary, nil
+	return nil
 }
 
-func handleExecute(binaryFilePath string, inputs []*multipart.FileHeader) ([]model.ExecutionResult, error) {
-	buffer := new(bytes.Buffer)
-	writer := multipart.NewWriter(buffer)
-	fieldName := "binary"
-	fileName := "binary"
-	err := utils.CreateFormFileFromFilePath(writer, fieldName, fileName, binaryFilePath)
+func handleExecute(id string) ([]model.ExecutionResult, error) {
+	buffer, writer, err := createHeader(id)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, input := range inputs {
-		err = utils.CreateFormFileFromFileHeader(writer, "inputs", input)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	writer.Close()
 
 	req, err := http.NewRequest("POST", "http://localhost:8082", buffer)
 	if err != nil {
@@ -109,8 +91,32 @@ func main() {
 	defer logFile.Close()
 
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, f VerdictForm) string {
-		binary, compilerErr := handleCompiling(f.Language, f.Source)
+	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, req VerdictForm) string {
+		client := graphql.NewClient("http://orm:8084/graphql", nil)
+		var info struct {
+			Submission struct {
+				Challenge struct {
+					Outputs    []struct {
+						FileName string
+						Content  []byte
+					}
+				}
+			} `graphql:"submission(id: $id)"`
+		}
+		variables := map[string]interface{}{
+			"id": graphql.ID(req.ID),
+		}
+		graphqlErr := client.Query(context.Background(), &info, variables)
+		if graphqlErr != nil {
+			msg := "An error occurred while trying to fetch submission '" + req.ID + "' details"
+			logger.Error().
+				Err(graphqlErr).
+				Msg(msg)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, graphqlErr)
+			return ""
+		}
+
+		compilerErr := handleCompiling(req.ID)
 		if errors.Is(compilerErr, compilationError) {
 			rs.WriteHeader(http.StatusOK)
 			logger.Debug().
@@ -118,7 +124,7 @@ func main() {
 			return "CE"
 		}
 		if compilerErr != nil {
-			msg := "Failed Judgment\nAn error occurred while trying to compile the file '" + f.Source.Filename + "' on the language '" + f.Language + "'"
+			msg := "Failed Judgment\nAn error occurred while trying to compile the source file"
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, compilerErr)
 			logger.Error().
 				Err(compilerErr).
@@ -126,17 +132,7 @@ func main() {
 			return ""
 		}
 
-		const binaryFileName = "binary"
-		writeErr := ioutil.WriteFile(binaryFileName, binary, 0777)
-		if writeErr != nil {
-			msg := "Failed judgment\nAn error occurred while trying to create a local copy of the binary compilation of '" + f.Source.Filename + "'"
-			utils.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
-			logger.Error().
-				Err(writeErr).
-				Msg(msg)
-			return ""
-		}
-		results, executorErr := handleExecute(binaryFileName, f.Inputs)
+		results, executorErr := handleExecute(req.ID)
 		if executorErr != nil {
 			msg := "Failed judgment\nAn error occurred while trying to execute the program with the received input files"
 			utils.WriteResponse(rs, http.StatusInternalServerError, msg, executorErr)
@@ -146,11 +142,11 @@ func main() {
 			return ""
 		}
 
-		outputs := map[string]*multipart.FileHeader{}
+		outputs := map[string]string{}
 
-		for _, out := range f.Outputs {
-			outputName := out.Filename[:len(out.Filename)-len(".out")]
-			outputs[outputName] = out
+		for _, output := range info.Submission.Challenge.Outputs {
+			outputName := output.FileName[:len(output.FileName)-len(".out")]
+			outputs[outputName] = string(output.Content)
 		}
 
 		result, err := verdict.Judge(results, outputs, logger)

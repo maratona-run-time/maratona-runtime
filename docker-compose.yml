@@ -16,6 +16,8 @@ services:
       context: ./
       dockerfile: compiler/Dockerfile
     image: compiler
+    volumes:
+      - submission:/var
     networks:
       - maratona-net
   executor:
@@ -25,6 +27,8 @@ services:
       context: ./
       dockerfile: executor/Dockerfile
     image: executor
+    volumes:
+      - submission:/var
     networks:
       - maratona-net
   verdict:
@@ -70,3 +74,4 @@ networks:
   database-net:
 volumes:
     postgres:
+    submission:
