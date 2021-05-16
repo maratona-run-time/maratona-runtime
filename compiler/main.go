@@ -28,17 +28,20 @@ var sourceFileName = map[string]string{
 	"Go":     "program.go",
 }
 
-type submission struct {
+type (
 	Submission struct {
 		Language string
 		Source   []byte
-	} `graphql:"submission(id: $id)"`
-}
+	}
+	Info struct {
+		Submission Submission `graphql:"submission(id: $id)"`
+	}
+)
 
 func createCompilerServer(client utils.QueryClient, logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
-		var info submission
+		var info Info
 		variables := map[string]interface{}{
 			"id": graphql.ID(req.ID),
 		}

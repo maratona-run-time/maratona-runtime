@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"io/ioutil"
 	"math/rand"
 	"mime/multipart"
@@ -10,7 +9,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -33,20 +31,6 @@ func createRequest(t *testing.T, id string) *http.Request {
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req
-}
-
-type graphqlMock struct {
-	test      *testing.T
-	object    interface{}
-	variables map[string]interface{}
-}
-
-func (gm graphqlMock) Query(ctx context.Context, info interface{}, variables map[string]interface{}) error {
-	reflect.ValueOf(info).Elem().Set(reflect.ValueOf(gm.object))
-	if !reflect.DeepEqual(gm.variables, variables) {
-		gm.test.Errorf("Expect request variables to be %v, received %v", gm.variables, variables)
-	}
-	return nil
 }
 
 func TestCompilerServer(t *testing.T) {
@@ -97,24 +81,22 @@ func TestCompilerServer(t *testing.T) {
 	logger := utils.InitDummyLogger()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var client graphqlMock
-			client.test = t
 			binary, readErr := ioutil.ReadFile(test.filepath)
 			if readErr != nil {
 				panic("Could not read testfile from " + test.filepath)
 			}
-			client.object = submission{
-				Submission: struct {
-					Language string
-					Source   []byte
-				}{
-					Language: test.language,
-					Source:   binary,
-				},
-			}
 			id := strconv.Itoa(rand.Int())
-			client.variables = map[string]interface{}{
-				"id": id,
+			var client utils.GraphqlMock = utils.GraphqlMock{
+				Test: t,
+				Object: Info{
+					Submission: Submission{
+						Language: test.language,
+						Source:   binary,
+					},
+				},
+				Variables: map[string]interface{}{
+					"id": id,
+				},
 			}
 			m := createCompilerServer(client, logger)
 			req := createRequest(t, id)
