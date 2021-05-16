@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"math/rand"
 	"mime/multipart"
@@ -43,15 +42,7 @@ type graphqlMock struct {
 }
 
 func (gm graphqlMock) Query(ctx context.Context, info interface{}, variables map[string]interface{}) error {
-	content, err := json.Marshal(gm.object)
-	if err != nil {
-		panic("Could not marshal graphql object")
-	}
-	err = json.Unmarshal(content, info)
-	if err != nil {
-		panic("Could not unmarshal graphql object into interface{}")
-	}
-
+	reflect.ValueOf(info).Elem().Set(reflect.ValueOf(gm.object))
 	if !reflect.DeepEqual(gm.variables, variables) {
 		gm.test.Errorf("Expect request variables to be %v, received %v", gm.variables, variables)
 	}
