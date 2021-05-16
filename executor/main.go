@@ -24,7 +24,6 @@ type FileForm struct {
 func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) []byte {
-		fmt.Println(req.ID)
 		client := graphql.NewClient("http://orm:8084/graphql", nil)
 		var info struct {
 			Submission struct {
