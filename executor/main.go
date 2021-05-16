@@ -21,21 +21,27 @@ type FileForm struct {
 	ID string `form:"id"`
 }
 
-func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
+type (
+	Input struct {
+		FileName string
+		Content  []byte
+	}
+	Challenge struct {
+		TimeLimit float32
+		Inputs    []Input
+	}
+	Submission struct {
+		Challenge Challenge
+	}
+	Info struct {
+		Submission Submission `graphql:"submission(id: $id)"`
+	}
+)
+
+func createExecutorServer(client utils.QueryClient, logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) []byte {
-		client := graphql.NewClient("http://orm:8084/graphql", nil)
-		var info struct {
-			Submission struct {
-				Challenge struct {
-					TimeLimit float32
-					Inputs    []struct {
-						FileName string
-						Content  []byte
-					}
-				}
-			} `graphql:"submission(id: $id)"`
-		}
+		var info Info
 		variables := map[string]interface{}{
 			"id": graphql.ID(req.ID),
 		}
@@ -82,6 +88,7 @@ func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
 func main() {
 	logger, logFile := utils.InitLogger("executor")
 	defer logFile.Close()
-	m := createExecutorServer(logger)
+	client := graphql.NewClient("http://orm:8084/graphql", nil)
+	m := createExecutorServer(client, logger)
 	m.RunOnAddr(":8082")
 }
