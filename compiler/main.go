@@ -28,16 +28,17 @@ var sourceFileName = map[string]string{
 	"Go":     "program.go",
 }
 
-func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
+type submission struct {
+	Submission struct {
+		Language string
+		Source   []byte
+	} `graphql:"submission(id: $id)"`
+}
+
+func createCompilerServer(client utils.QueryClient, logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
-		client := graphql.NewClient("http://orm:8084/graphql", nil)
-		var info struct {
-			Submission struct {
-				Language string
-				Source   []byte
-			} `graphql:"submission(id: $id)"`
-		}
+		var info submission
 		variables := map[string]interface{}{
 			"id": graphql.ID(req.ID),
 		}
@@ -104,6 +105,7 @@ func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 func main() {
 	logger, logFile := utils.InitLogger("compiler")
 	defer logFile.Close()
-	m := createCompilerServer(logger)
+	client := graphql.NewClient("http://orm:8084/graphql", nil)
+	m := createCompilerServer(client, logger)
 	m.RunOnAddr(":8081")
 }
