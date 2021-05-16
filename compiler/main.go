@@ -1,18 +1,18 @@
 package main
 
 import (
+	"context"
+	"io/ioutil"
 	"net/http"
 	"os"
-	"io/ioutil"
-	"context"
 
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 
 	"github.com/go-martini/martini"
+	graphql "github.com/hasura/go-graphql-client"
 	"github.com/martini-contrib/binding"
 	"github.com/rs/zerolog"
-	graphql "github.com/hasura/go-graphql-client"
 )
 
 // FileForm receives a submission ID
@@ -35,7 +35,7 @@ func createCompilerServer(logger zerolog.Logger) *martini.ClassicMartini {
 		var info struct {
 			Submission struct {
 				Language string
-				Source []byte
+				Source   []byte
 			} `graphql:"submission(id: $id)"`
 		}
 		variables := map[string]interface{}{

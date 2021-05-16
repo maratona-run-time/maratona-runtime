@@ -1,19 +1,19 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"context"
 
 	"github.com/go-martini/martini"
+	graphql "github.com/hasura/go-graphql-client"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 	"github.com/rs/zerolog"
-	graphql "github.com/hasura/go-graphql-client"
 )
 
 // FileForm receives a submission ID

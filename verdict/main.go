@@ -2,18 +2,18 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"mime/multipart"
 	"net/http"
-	"context"
 
 	"github.com/go-martini/martini"
+	graphql "github.com/hasura/go-graphql-client"
 	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	verdict "github.com/maratona-run-time/Maratona-Runtime/verdict/src"
 	"github.com/martini-contrib/binding"
-	graphql "github.com/hasura/go-graphql-client"
 )
 
 var compilationError = errors.New("Compilation Error")
@@ -37,7 +37,7 @@ func createHeader(id string) (*bytes.Buffer, *multipart.Writer, error) {
 	return buffer, writer, nil
 }
 
-func handleCompiling(id string) (error) {
+func handleCompiling(id string) error {
 	buffer, writer, err := createHeader(id)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func main() {
 		var info struct {
 			Submission struct {
 				Challenge struct {
-					Outputs    []struct {
+					Outputs []struct {
 						FileName string
 						Content  []byte
 					}
