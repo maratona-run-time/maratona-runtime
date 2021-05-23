@@ -127,7 +127,15 @@ func createOrmServer() *martini.ClassicMartini {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access source file", err)
 			return
 		}
-		submission := model.Submission{Language: form.Language, Source: content, ChallengeID: form.ChallengeID}
+		submission := model.Submission{
+			Language: form.Language,
+			Source:   content,
+			Status: model.Status{
+				Verdict: model.PENDING,
+				Message: "",
+			},
+			ChallengeID: form.ChallengeID,
+		}
 		err = orm.CreateSubmission(&submission)
 		if err != nil {
 			msg := fmt.Sprintf("Could not save submission")
