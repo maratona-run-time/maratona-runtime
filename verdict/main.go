@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"mime/multipart"
 	"net/http"
 
 	"github.com/go-martini/martini"
@@ -23,34 +21,8 @@ type VerdictForm struct {
 	ID string `form:"id"`
 }
 
-func createHeader(id string) (*bytes.Buffer, *multipart.Writer, error) {
-	buffer := new(bytes.Buffer)
-	writer := multipart.NewWriter(buffer)
-
-	err := utils.CreateFormField(writer, "id", id)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	writer.Close()
-
-	return buffer, writer, nil
-}
-
 func handleCompiling(id string) error {
-	buffer, writer, err := createHeader(id)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("POST", "http://localhost:8081", buffer)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := utils.MakeSubmissionRequest("http://localhost:8081", id)
 	if err != nil {
 		return err
 	}
@@ -62,18 +34,7 @@ func handleCompiling(id string) error {
 }
 
 func handleExecute(id string) ([]model.ExecutionResult, error) {
-	buffer, writer, err := createHeader(id)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", "http://localhost:8082", buffer)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := utils.MakeSubmissionRequest("http://localhost:8082", id)
 	if err != nil {
 		return nil, err
 	}
