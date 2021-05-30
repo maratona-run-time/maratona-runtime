@@ -44,9 +44,17 @@ var challenge = graphql.NewObject(
 			},
 			"inputs": &graphql.Field{
 				Type: graphql.NewList(testFile),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					challenge := p.Source.(model.Challenge)
+					return model.InputsArray(challenge.Inputs).TestFiles(), nil
+				},
 			},
 			"outputs": &graphql.Field{
 				Type: graphql.NewList(testFile),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					challenge := p.Source.(model.Challenge)
+					return model.OutputsArray(challenge.Outputs).TestFiles(), nil
+				},
 			},
 		},
 	},
