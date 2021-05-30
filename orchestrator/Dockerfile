@@ -4,6 +4,7 @@ COPY go.sum go.mod ./
 RUN go mod download
 COPY model/ model/
 COPY utils/ utils/
+COPY queue/ queue/
 COPY orchestrator/ orchestrator/
 RUN go build orchestrator/main.go
 

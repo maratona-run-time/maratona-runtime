@@ -1,16 +1,18 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/go-martini/martini"
-	"io/ioutil"
+	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
+	"strconv"
+
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/binding"
 
 	"github.com/maratona-run-time/Maratona-Runtime/model"
 	orm "github.com/maratona-run-time/Maratona-Runtime/orm/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
-	"github.com/martini-contrib/binding"
 )
 
 // ChallengeForm is a struct for receiving input and output files for a challenge via HTTP.
@@ -22,29 +24,16 @@ type ChallengeForm struct {
 	Outputs     []*multipart.FileHeader `form:"outputs"`
 }
 
-func writeJSONResponse(rs http.ResponseWriter, response interface{}) {
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		utils.WriteResponse(rs, http.StatusInternalServerError, "Error parsing response to JSON", err)
-		return
-	}
-	rs.Header().Set("Content-Type", "application/json")
-	rs.Write(jsonResponse)
-}
+var challengeNotFound = errors.New("Challenge not found")
 
-func parseRequestFiles(files []*multipart.FileHeader) ([]model.TestFile, error) {
+func parseTestFiles(files []*multipart.FileHeader) ([]model.TestFile, error) {
 	array := make([]model.TestFile, len(files))
 	for i, file := range files {
-		content, err := file.Open()
+		name, content, err := parseRequestFile(file)
 		if err != nil {
 			return nil, err
 		}
-		defer content.Close()
-		byteInput, err := ioutil.ReadAll(content)
-		if err != nil {
-			return nil, err
-		}
-		array[i] = model.TestFile{Filename: file.Filename, Content: byteInput}
+		array[i] = model.TestFile{Filename: name, Content: content}
 	}
 	return array, nil
 }
@@ -60,21 +49,30 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 	})
 
 	m.Get("/challenge/:id", func(rs http.ResponseWriter, rq *http.Request, params martini.Params) {
-		id := params["id"]
-		challenge, err := orm.FindChallenge(id)
+		id, err := strconv.ParseUint(params["id"], 10, 64)
 		if err != nil {
-			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id), err)
+			utils.WriteResponse(rs, http.StatusBadRequest, "Challenge ID "+fmt.Sprint(id)+" must be a number", err)
+			return
+		}
+		challenge, err := orm.FindChallenge(uint(id))
+		if err != nil {
+			msg := fmt.Sprintf("Database error trying to find challenge with id %v", fmt.Sprint(id))
+			utils.WriteResponse(rs, http.StatusNotFound, msg, challengeNotFound)
 			return
 		}
 		writeJSONResponse(rs, challenge)
 	})
 
 	m.Put("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
-		id := params["id"]
-		challenge, err := orm.FindChallenge(id)
+		id, err := strconv.ParseUint(params["id"], 10, 64)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusBadRequest, fmt.Sprintf("Challenge ID %v must be a number", id), err)
+			return
+		}
+		challenge, err := orm.FindChallenge(uint(id))
 
 		if err != nil {
-			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id)+" to update", err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, fmt.Sprintf("Database error trying to find challenge with id %v to update", id), err)
 			return
 		}
 
@@ -82,14 +80,14 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 		challenge.TimeLimit = f.TimeLimit
 		challenge.MemoryLimit = f.MemoryLimit
 
-		files, err := parseRequestFiles(f.Inputs)
+		files, err := parseTestFiles(f.Inputs)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
 			return
 		}
 		challenge.Inputs = (model.TestFileArray)(files).InputFiles()
 
-		files, err = parseRequestFiles(f.Outputs)
+		files, err = parseTestFiles(f.Outputs)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 			return
@@ -105,11 +103,15 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 	})
 
 	m.Patch("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
-		id := params["id"]
-		challenge, err := orm.FindChallenge(id)
+		id, err := strconv.ParseUint(params["id"], 10, 64)
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusBadRequest, "Challenge ID "+fmt.Sprint(id)+" must be a number", err)
+			return
+		}
+		challenge, err := orm.FindChallenge(uint(id))
 
 		if err != nil {
-			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id)+" to update", err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(rune(id))+" to update", err)
 			return
 		}
 
@@ -124,7 +126,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 		}
 
 		if len(f.Inputs) > 0 {
-			inputsArray, err := parseRequestFiles(f.Inputs)
+			inputsArray, err := parseTestFiles(f.Inputs)
 			if err != nil {
 				utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
 				return
@@ -133,7 +135,7 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 		}
 
 		if len(f.Outputs) > 0 {
-			outputsArray, err := parseRequestFiles(f.Outputs)
+			outputsArray, err := parseTestFiles(f.Outputs)
 			if err != nil {
 				utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 				return
@@ -150,12 +152,12 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 	})
 
 	m.Post("/challenge", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm) {
-		inputsArray, err := parseRequestFiles(f.Inputs)
+		inputsArray, err := parseTestFiles(f.Inputs)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access input files", err)
 			return
 		}
-		outputsArray, err := parseRequestFiles(f.Outputs)
+		outputsArray, err := parseTestFiles(f.Outputs)
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusInternalServerError, "Error trying to access output files", err)
 			return
@@ -172,10 +174,14 @@ func setChallengeRoutes(m *martini.ClassicMartini) {
 	})
 
 	m.Delete("/challenge/:id", binding.MultipartForm(ChallengeForm{}), func(rs http.ResponseWriter, rq *http.Request, f ChallengeForm, params martini.Params) {
-		id := params["id"]
-		err := orm.DeleteChallenge(id)
+		id, err := strconv.ParseUint(params["id"], 10, 64)
 		if err != nil {
-			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find challenge with id "+string(id)+" to update", err)
+			utils.WriteResponse(rs, http.StatusBadRequest, "Challenge ID "+fmt.Sprint(id)+" must be a number", err)
+			return
+		}
+		err = orm.DeleteChallenge(uint(id))
+		if err != nil {
+			utils.WriteResponse(rs, http.StatusInternalServerError, fmt.Sprintf("Database error trying to find challenge with id %v to update", id), err)
 			return
 		}
 		utils.WriteResponse(rs, http.StatusNoContent, "", nil)

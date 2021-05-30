@@ -25,4 +25,5 @@
 
 # hidden files
 .*
+!.github
 !.travis.yml

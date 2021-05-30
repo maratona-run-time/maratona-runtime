@@ -4,8 +4,9 @@ COPY go.sum go.mod ./
 RUN go mod download
 COPY utils/ utils/
 COPY model/ model/
+COPY queue/ queue/
 COPY orm/ orm/
-RUN go build orm/main.go orm/challenge.go
+RUN go build -o main orm/*.go
 
 FROM alpine
 WORKDIR /go/src/app

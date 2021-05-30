@@ -20,7 +20,7 @@ type ExecutionResult struct {
 type SubmissionForm struct {
 	Language    string                `form:"language"`
 	Source      *multipart.FileHeader `form:"source"`
-	ChallengeID string                `form:"challengeID"`
+	ChallengeID uint                  `form:"challengeID"`
 }
 
 // Challenge is a representation for the ORM of our challenges and their relevant information such as
@@ -32,6 +32,13 @@ type Challenge struct {
 	MemoryLimit int
 	Inputs      []InputFile  `gorm:"ForeignKey:ChallengeID"`
 	Outputs     []OutputFile `gorm:"ForeignKey:ChallengeID"`
+}
+
+type Submission struct {
+	gorm.Model
+	Language    string
+	Source      []byte
+	ChallengeID uint
 }
 
 // TestFile represents the input of a single test case for a given challenge.

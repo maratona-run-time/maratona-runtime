@@ -1,4 +1,5 @@
 FROM golang:alpine AS build
+EXPOSE 8081
 WORKDIR /go/src/app
 COPY go.sum go.mod ./
 RUN go mod download

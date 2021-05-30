@@ -8,14 +8,18 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/go-martini/martini"
 	"github.com/maratona-run-time/Maratona-Runtime/model"
+	"github.com/maratona-run-time/Maratona-Runtime/queue"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 )
 
 var getChallengeError = errors.New("Error getting challenge")
+var getSubmissionError = errors.New("Error getting submission")
 var verdictResponseError = errors.New("Error on verdict response")
 
 func createTestFileField(writer *multipart.Writer, fieldName string, files []model.TestFile) error {
@@ -28,8 +32,8 @@ func createTestFileField(writer *multipart.Writer, fieldName string, files []mod
 	return nil
 }
 
-func getChallengeInfo(challengeID string) (model.Challenge, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8080/challenge/%v", challengeID), new(bytes.Buffer))
+func getChallengeInfo(challengeID uint) (model.Challenge, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8084/challenge/%v", challengeID), new(bytes.Buffer))
 	if err != nil {
 		return model.Challenge{}, err
 	}
@@ -50,6 +54,30 @@ func getChallengeInfo(challengeID string) (model.Challenge, error) {
 	}
 	err = json.Unmarshal(binary, &challenge)
 	return challenge, err
+}
+
+func getSubmissionInfo(submissionID uint) (model.Submission, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8084/submission/%v", submissionID), new(bytes.Buffer))
+	if err != nil {
+		return model.Submission{}, err
+	}
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return model.Submission{}, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return model.Submission{}, getSubmissionError
+	}
+
+	var submission model.Submission
+	binary, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return model.Submission{}, err
+	}
+	err = json.Unmarshal(binary, &submission)
+	return submission, err
 }
 
 func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, error) {
@@ -79,7 +107,56 @@ func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, 
 
 	writer.Close()
 
-	req, err := http.NewRequest("POST", "http://verdict:8080", buffer)
+	req, err := http.NewRequest("POST", "http://mart:8083", buffer)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, verdictResponseError
+	}
+
+	binary, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	return binary, nil
+}
+
+func callVerdictSubmission(challenge model.Challenge, submission model.Submission) ([]byte, error) {
+	buffer := new(bytes.Buffer)
+	writer := multipart.NewWriter(buffer)
+
+	fieldName := "language"
+	err := utils.CreateFormField(writer, fieldName, submission.Language)
+	if err != nil {
+		return nil, err
+	}
+
+	err = utils.CreateFormFileFromContent(writer, "source", submission.Source, "source.program")
+	if err != nil {
+		return nil, err
+	}
+
+	err = createTestFileField(writer, "inputs", (model.InputsArray(challenge.Inputs)).TestFiles())
+	if err != nil {
+		return nil, err
+	}
+
+	err = createTestFileField(writer, "outputs", (model.OutputsArray(challenge.Outputs)).TestFiles())
+	if err != nil {
+		return nil, err
+	}
+
+	writer.Close()
+
+	req, err := http.NewRequest("POST", "http://mart:8083", buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -119,5 +196,33 @@ func main() {
 
 		rs.Write(verdictResponse)
 	})
+
+	msgs, err := queue.GetSubmissionChannel()
+	for err != nil {
+		fmt.Println(err)
+		msgs, err = queue.GetSubmissionChannel()
+		time.Sleep(2 * time.Second)
+	}
+	for queueMessage := range msgs {
+		idString := string(queueMessage.Body)
+		id, err := strconv.ParseUint(idString, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		submission, err := getSubmissionInfo(uint(id))
+		if err != nil {
+			panic(err)
+		}
+		challenge, err := getChallengeInfo(submission.ChallengeID)
+		if err != nil {
+			panic(err)
+		}
+		verdictResponse, err := callVerdictSubmission(challenge, submission)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(verdictResponse)
+	}
+
 	m.RunOnAddr(":8080")
 }
