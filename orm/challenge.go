@@ -18,7 +18,7 @@ import (
 // ChallengeForm is a struct for receiving input and output files for a challenge via HTTP.
 type ChallengeForm struct {
 	Title       string                  `form:"title"`
-	TimeLimit   int                     `form:"timeLimit"`
+	TimeLimit   float32                 `form:"timeLimit"`
 	MemoryLimit int                     `form:"memoryLimit"`
 	Inputs      []*multipart.FileHeader `form:"inputs"`
 	Outputs     []*multipart.FileHeader `form:"outputs"`

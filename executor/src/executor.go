@@ -48,7 +48,7 @@ func Execute(path string,
 		errorOutput := make(chan error)
 		output := make(chan []byte)
 
-		executable := fmt.Sprintf("./%s", path)
+		executable := fmt.Sprintf("%s", path)
 
 		file, fileErr := os.Open(inputFileName)
 		if fileErr != nil {

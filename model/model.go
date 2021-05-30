@@ -27,8 +27,9 @@ type SubmissionForm struct {
 // the challenge title, the memory and time constraints for the submissions and the set of input and outputs that represent the test cases.
 type Challenge struct {
 	gorm.Model
+	ID          uint
 	Title       string
-	TimeLimit   int
+	TimeLimit   float32
 	MemoryLimit int
 	Inputs      []InputFile  `gorm:"ForeignKey:ChallengeID"`
 	Outputs     []OutputFile `gorm:"ForeignKey:ChallengeID"`
@@ -36,6 +37,7 @@ type Challenge struct {
 
 type Submission struct {
 	gorm.Model
+	ID          uint
 	Language    string
 	Source      []byte
 	ChallengeID uint
@@ -44,6 +46,7 @@ type Submission struct {
 // TestFile represents the input of a single test case for a given challenge.
 type TestFile struct {
 	gorm.Model
+	ID          uint
 	Filename    string
 	Content     []byte
 	ChallengeID uint

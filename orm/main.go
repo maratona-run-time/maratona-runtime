@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-martini/martini"
+	"github.com/graphql-go/handler"
 
 	orm "github.com/maratona-run-time/Maratona-Runtime/orm/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
@@ -49,5 +50,11 @@ func createOrmServer() *martini.ClassicMartini {
 
 func main() {
 	m := createOrmServer()
+	h := handler.New(&handler.Config{
+		Schema:   &orm.Schema,
+		Pretty:   true,
+		GraphiQL: true,
+	})
+	m.Any("/graphql", h.ServeHTTP)
 	m.RunOnAddr(":8084")
 }

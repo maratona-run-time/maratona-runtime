@@ -18,12 +18,12 @@ func setSubmissionRoutes(m *martini.ClassicMartini) {
 	m.Get("/submission/:id", func(rs http.ResponseWriter, rq *http.Request, params martini.Params) {
 		id, err := strconv.ParseUint(params["id"], 10, 64)
 		if err != nil {
-			utils.WriteResponse(rs, http.StatusBadRequest, "Submission ID "+fmt.Sprint(id)+" must be a number", err)
+			utils.WriteResponse(rs, http.StatusBadRequest, fmt.Sprintf("Submission ID %v must be a number", id), err)
 			return
 		}
 		submission, err := orm.FindSubmission(uint(id))
 		if err != nil {
-			utils.WriteResponse(rs, http.StatusInternalServerError, "Database error trying to find submission with id "+fmt.Sprint(id), err)
+			utils.WriteResponse(rs, http.StatusInternalServerError, fmt.Sprintf("Database error trying to find submission with id %v", id), err)
 			return
 		}
 		writeJSONResponse(rs, submission)

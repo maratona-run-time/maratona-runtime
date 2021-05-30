@@ -3,9 +3,15 @@ language: go
 go:
   - 1.15.2
 
+services:
+  - docker
+
 script:
-  - diff -u <(echo -n) <(gofmt -d ./)
-  - go test ./... -v -coverprofile=coverage.txt -covermode=atomic
+  - test -z "$(gofmt -l -d ./)"
+  - mkdir coverage
+  - docker build . -t test
+  - docker run -v "$(pwd)/coverage/":/go/src/app/coverage test
 
 after_success:
+  - mv coverage/coverage.txt coverage.txt
   - bash <(curl -s https://codecov.io/bash)
