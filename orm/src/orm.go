@@ -72,3 +72,9 @@ func FindSubmission(id uint) (model.Submission, error) {
 	err := db.First(&submission, id).Error
 	return submission, err
 }
+
+// UpdateChallenge receives an existing Submission object and updates its value on the database.
+func UpdateSubmission(submission model.Submission) error {
+	db := dbConnect()
+	return db.Save(&submission).Error
+}
