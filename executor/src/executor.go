@@ -60,15 +60,15 @@ func Execute(path string,
 
 		select {
 		case <-ctx.Done():
-			res = append(res, model.ExecutionResult{inputFileName, "TLE", "Time limit exceeded"})
+			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: model.TIME_LIMIT_EXCEEDED, Message: "Time limit exceeded"})
 			logger.Debug().Msg("Time limit exceeded")
 			return res
 		case err := <-errorOutput:
-			res = append(res, model.ExecutionResult{inputFileName, "RTE", err.Error()})
-			logger.Debug().Msg("Run time error")
+			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: model.RUNTIME_ERROR, Message: err.Error()})
+			logger.Debug().Msg("Runtime error")
 			return res
 		case out := <-output:
-			res = append(res, model.ExecutionResult{inputFileName, "OK", string(out)})
+			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "OK", Message: string(out)})
 		}
 	}
 	logger.Debug().Msg("Executions finished")

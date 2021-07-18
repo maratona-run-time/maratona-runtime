@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	REJECTED              = "Rejected"
 	PENDING               = "Pending"
 	ACCEPTED              = "Accepted"
 	WRONG_ANSWER          = "Wrong Answer"

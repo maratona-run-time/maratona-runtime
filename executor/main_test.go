@@ -117,7 +117,7 @@ func TestExecutorServer(t *testing.T) {
 				},
 				{
 					TestName: "inputs/4.in",
-					Status:   "TLE",
+					Status:   model.TIME_LIMIT_EXCEEDED,
 					Message:  "Tempo limite excedido",
 				},
 			},
@@ -132,7 +132,7 @@ func TestExecutorServer(t *testing.T) {
 			expectedResult: []model.ExecutionResult{
 				{
 					TestName: "inputs/1.in",
-					Status:   "RTE",
+					Status:   model.RUNTIME_ERROR,
 					Message:  "exit status 1",
 				},
 			},
