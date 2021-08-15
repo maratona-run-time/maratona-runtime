@@ -2,6 +2,7 @@ package orm
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/graphql-go/graphql"
@@ -80,6 +81,20 @@ var submission = graphql.NewObject(
 					return FindChallenge(submission.ChallengeID)
 				},
 			},
+			"verdict": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					submission := p.Source.(model.Submission)
+					return submission.Status.Verdict, nil
+				},
+			},
+			"message": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					submission := p.Source.(model.Submission)
+					return submission.Status.Message, nil
+				},
+			},
 		},
 	},
 )
@@ -131,8 +146,50 @@ var queries = graphql.NewObject(
 	},
 )
 
+var mutations = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "Mutation",
+		Fields: graphql.Fields{
+			"judge": &graphql.Field{
+				Type: submission,
+				Args: graphql.FieldConfigArgument{
+					"submissionID": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.ID),
+					},
+					"verdict": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"message": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					stringSubmissionID := p.Args["submissionID"].(string)
+					submissionID, err := strconv.ParseUint(stringSubmissionID, 10, 64)
+					if err != nil {
+						return nil, errors.New("Could not convert id field to an uint")
+					}
+					verdict := p.Args["verdict"].(string)
+					message := p.Args["message"].(string)
+					submission, err := FindSubmission(uint(submissionID))
+					if err != nil {
+						return nil, errors.New(fmt.Sprintf("Submission with id %v not found ", submissionID))
+					}
+					submission.Status.Verdict = verdict
+					submission.Status.Message = message
+					if err = UpdateSubmission(submission); err != nil {
+						return nil, err
+					}
+					return submission, nil
+				},
+			},
+		},
+	},
+)
+
 var Schema, _ = graphql.NewSchema(
 	graphql.SchemaConfig{
-		Query: queries,
+		Query:    queries,
+		Mutation: mutations,
 	},
 )

@@ -6,6 +6,17 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	REJECTED              = "Rejected"
+	PENDING               = "Pending"
+	ACCEPTED              = "Accepted"
+	WRONG_ANSWER          = "Wrong Answer"
+	COMPILATION_ERROR     = "Compilation Error"
+	TIME_LIMIT_EXCEEDED   = "Time Limit Exceeded"
+	MEMORY_LIMIT_EXCEEDED = "Memory Limit Exceeded"
+	RUNTIME_ERROR         = "Runtime Error"
+)
+
 // ExecutionResult represents the result of executing a given submission against one test case.
 // TestName is the name of the test case, Status is the status of the test (i.e. "OK", "TLE" nad "RTE")
 // and Message is used to store any relevant information, such as error messages.
@@ -35,11 +46,17 @@ type Challenge struct {
 	Outputs     []OutputFile `gorm:"ForeignKey:ChallengeID"`
 }
 
+type Status struct {
+	Verdict string
+	Message string
+}
+
 type Submission struct {
 	gorm.Model
 	ID          uint
 	Language    string
 	Source      []byte
+	Status      Status `gorm:"embedded"`
 	ChallengeID uint
 }
 

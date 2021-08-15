@@ -47,13 +47,41 @@ func handleExecute(id string) ([]model.ExecutionResult, error) {
 	return *executionResult, nil
 }
 
+func saveSubmissionStatus(client *graphql.Client, id, verdict, message string) error {
+	var judgeMutation struct {
+		Judge struct {
+			Verdict string
+		} `graphql:"judge(submissionID: $id, verdict: $verdict, message: $message)"`
+	}
+	variables := map[string]interface{}{
+		"id":      id,
+		"verdict": graphql.String(verdict),
+		"message": graphql.String(message),
+	}
+	return client.Mutate(context.Background(), &judgeMutation, variables)
+}
+
 func main() {
 	logger, logFile := utils.InitLogger("verdict")
 	defer logFile.Close()
 
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(VerdictForm{}), func(rs http.ResponseWriter, rq *http.Request, req VerdictForm) string {
+		var status struct {
+			verdict, message string
+		}
 		client := graphql.NewClient("http://orm:8084/graphql", nil)
+		defer func() {
+			err := saveSubmissionStatus(client, req.ID, status.verdict, status.message)
+			if err != nil {
+				msg := "An error occurred while trying to save submission '" + req.ID + "' verdict"
+				logger.Error().
+					Err(err).
+					Msg(msg)
+
+				utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
+			}
+		}()
 		var info struct {
 			Submission struct {
 				Challenge struct {
@@ -73,7 +101,10 @@ func main() {
 			logger.Error().
 				Err(graphqlErr).
 				Msg(msg)
+
 			utils.WriteResponse(rs, http.StatusBadRequest, msg, graphqlErr)
+			status.verdict = model.REJECTED
+			status.message = msg
 			return ""
 		}
 
@@ -82,6 +113,7 @@ func main() {
 			rs.WriteHeader(http.StatusOK)
 			logger.Debug().
 				Msg("Compilation Error")
+			status.verdict = model.COMPILATION_ERROR
 			return "CE"
 		}
 		if compilerErr != nil {
@@ -90,6 +122,8 @@ func main() {
 			logger.Error().
 				Err(compilerErr).
 				Msg(msg)
+			status.verdict = model.REJECTED
+			status.message = msg
 			return ""
 		}
 
@@ -100,6 +134,8 @@ func main() {
 			logger.Error().
 				Err(executorErr).
 				Msg(msg)
+			status.verdict = model.REJECTED
+			status.message = msg
 			return ""
 		}
 
@@ -110,13 +146,14 @@ func main() {
 			outputs[outputName] = string(output.Content)
 		}
 
-		result, err := verdict.Judge(results, outputs, logger)
+		var err error
+		status.verdict, status.message, err = verdict.Judge(results, outputs, logger)
 
 		if err != nil {
 			utils.WriteResponse(rs, http.StatusBadRequest, "", err)
 			return ""
 		}
-		return result
+		return status.verdict
 	})
 	m.RunOnAddr(":8083")
 }
