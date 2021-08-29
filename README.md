@@ -33,15 +33,40 @@ The communication between the services is done via HTTP, using two docker networ
 
 ### Using Kubernetes
 
-Initially, run `docker-compose build` to make sure your machine has the project images.
+If you want to use your local docker images, you might have to configure minikube to use the local Docker environment. To do that run:
+
+```
+eval $(minikube -p minikube docker-env)
+```
+
+After this change the image names used on k8s/ files, removing the `mruntime/` prefix.
+
+You'll need to rebuild any pre-existing images to make them accessible from the cluster after this step.
+To build the images, run `docker-compose build`.
 
 Another possibility is pulling the docker images from our [DockerHub registry](https://hub.docker.com/orgs/mruntime).
 
 Then, to deploy the project run:
 
 ```bash
+minikube start --cpus 4 --memory=8192 --vm=true
+minikube addons enable ingress
+kubectl apply -f k8s/
+kubectl get ingress 
+```
 
-kubectl create -f k8s/
+Add on your `/etc/hosts` the ip provided on the last command above for the route mart-route.
+
+### Troubleshooting
+
+```bash
+Error from server (InternalError): error when creating "k8s/ingress.yml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": an error on the server ("") has prevented the request from succeeding
+```
+
+Run:
+
+```bash
+kubectl delete validatingwebhookconfigurations ingress-nginx-admission
 ```
 
 ## Submissions Database

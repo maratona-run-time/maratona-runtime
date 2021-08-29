@@ -86,48 +86,25 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: 
-    name: mart
-    labels:
-        app: mart
+metadata:
+  name: rabbitmq
 spec:
-    replicas: 2
-    selector:
-        matchLabels:
-            app: mart
-    template:
-        metadata:
-          name: mart
-          labels:
-            name: mart
-            app: mart
-        spec:
-            containers:
-              - name: verdict
-                image: mruntime/verdict
-                imagePullPolicy: IfNotPresent
-                resources:
-                  limits:
-                    memory: "700Mi"
-                    cpu: "300m"
-                ports:
-                  - containerPort: 8083
-              - name: executor
-                image: mruntime/executor
-                imagePullPolicy: IfNotPresent
-                resources:
-                  limits:
-                    memory: "700Mi"
-                    cpu: "300m"
-                ports:
-                  - containerPort: 8082
-              - name: compiler
-                image: mruntime/compiler
-                imagePullPolicy: IfNotPresent
-                resources:
-                  limits:
-                    memory: "700Mi"
-                    cpu: "300m"
-                ports:
-                  - containerPort: 8081
-
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: "rabbitmq:management-alpine"
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672

@@ -25,6 +25,9 @@ spec:
         cpu: "300m"
     ports:
       - containerPort: 8082
+    volumeMounts:
+    - mountPath: /var/
+      name: submission
   - name: compiler
     image: mruntime/compiler
     imagePullPolicy: IfNotPresent
@@ -34,3 +37,8 @@ spec:
         cpu: "300m"
     ports:
       - containerPort: 8081
+    volumeMounts:
+    - mountPath: /var
+      name: submission
+  volumes:
+  - name: submission

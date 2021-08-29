@@ -14,7 +14,7 @@ import (
 var verdictResponseError = errors.New("Error on verdict response")
 
 func callVerdict(id string) ([]byte, error) {
-	res, err := utils.MakeSubmissionRequest("http://mart:8083", id)
+	res, err := utils.MakeSubmissionRequest("http://mart-verdict:8083", id)
 	if err != nil {
 		return nil, err
 	}
