@@ -42,6 +42,8 @@ func main() {
 	}
 	for queueMessage := range msgs {
 		id := string(queueMessage.Body)
+		createPod()
+		time.Sleep(20 * time.Second)
 		verdictResponse, err := callVerdict(id)
 		if err != nil {
 			logger.Error().Err(err).Msgf("An error occurred when calling verdict with submission id %v", id)
