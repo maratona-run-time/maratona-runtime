@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   namespace: default
-  name: mart
+  generateName: mart-
   labels:
     name: mart
     app: mart
@@ -10,7 +10,7 @@ spec:
   containers:
   - name: verdict
     image: mruntime/verdict
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     resources:
       limits:
         memory: "700Mi"
@@ -19,7 +19,7 @@ spec:
       - containerPort: 8083
   - name: executor
     image: mruntime/executor
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     resources:
       limits:
         memory: "700Mi"
@@ -31,7 +31,7 @@ spec:
       name: submission
   - name: compiler
     image: mruntime/compiler
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     resources:
       limits:
         memory: "700Mi"

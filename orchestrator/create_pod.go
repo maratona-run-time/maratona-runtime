@@ -1,18 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"context"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 )
 
-func createPod() {
+func createPod(submissionID string) {
 	fmt.Println("Trying to create Pod")
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -34,6 +34,10 @@ func createPod() {
 	}
 
 	pod := obj.(*apiv1.Pod)
+
+	for i := 0; i < len(pod.Spec.Containers); i++ {
+		pod.Spec.Containers[i].Env = append(pod.Spec.Containers[i].Env, apiv1.EnvVar{Name: "SUBMISSION_ID", Value: submissionID})
+	}
 
 	fmt.Printf("%#v\n", pod)
 

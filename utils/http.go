@@ -2,10 +2,17 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"time"
+
+	"github.com/hasura/go-graphql-client"
 )
+
+const REQUEST_RETRIES = 3
+const RETRY_INTERVAL = time.Second
 
 // MakeSubmissionRequest calls path with a submission id on the request form
 func MakeSubmissionRequest(path string, id string) (*http.Response, error) {
@@ -18,14 +25,38 @@ func MakeSubmissionRequest(path string, id string) (*http.Response, error) {
 	}
 	writer.Close()
 
-	req, err := http.NewRequest("POST", path, buffer)
-	if err != nil {
-		return nil, err
+	retry_number := 0
+	for retry_number < REQUEST_RETRIES {
+		var res *http.Response
+		var req *http.Request
+		req, err = http.NewRequest("POST", path, buffer)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		client := &http.Client{}
+		res, err = client.Do(req)
+		if err == nil {
+			return res, err
+		}
+		time.Sleep(RETRY_INTERVAL)
+		retry_number++
 	}
+	return nil, err
+}
 
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	client := &http.Client{}
-	return client.Do(req)
+func SaveSubmissionStatus(client *graphql.Client, id, verdict, message string) error {
+	var judgeMutation struct {
+		Judge struct {
+			Verdict string
+		} `graphql:"judge(submissionID: $id, verdict: $verdict, message: $message)"`
+	}
+	variables := map[string]interface{}{
+		"id":      id,
+		"verdict": graphql.String(verdict),
+		"message": graphql.String(message),
+	}
+	return client.Mutate(context.Background(), &judgeMutation, variables)
 }
 
 // WriteResponse is used to write a HTTP response status in case of an error.

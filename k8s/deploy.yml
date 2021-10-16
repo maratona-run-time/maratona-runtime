@@ -14,7 +14,7 @@ spec:
       containers:
       - name: orchestrator
         image: mruntime/orchestrator
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         resources:
           limits:
             memory: "512Mi"
