@@ -39,6 +39,8 @@ If you want to use your local docker images, you might have to configure minikub
 eval $(minikube -p minikube docker-env)
 ```
 
+Be sure to execute this on every shell you're using!
+
 After this change the image names used on k8s/ files, removing the `mruntime/` prefix.
 
 You'll need to rebuild any pre-existing images to make them accessible from the cluster after this step.

@@ -1,8 +1,8 @@
-kill -9 $(lsof -t -i:8080) 
-kill -9 $(lsof -t -i:8081) 
-kill -9 $(lsof -t -i:8082) 
-kill -9 $(lsof -t -i:8083) 
-kill -9 $(lsof -t -i:8084) 
-kill -9 $(lsof -t -i:5432) 
-kill -9 $(lsof -t -i:5672) 
-kill -9 $(lsof -t -i:15672) 
+fuser -k 8080/tcp
+fuser -k 8081/tcp
+fuser -k 8082/tcp
+fuser -k 8083/tcp
+fuser -k 8084/tcp
+fuser -k 5432/tcp
+fuser -k 5672/tcp
+fuser -k 15672/tcp

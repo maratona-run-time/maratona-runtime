@@ -1,4 +1,5 @@
 pushd k8s
-kubectl delete -f=deploy.yml,service.yml,pod.yml
+kubectl delete -f .
+kubectl delete pod --all
 kubectl create -f .
 popd

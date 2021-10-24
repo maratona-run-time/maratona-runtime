@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const CONTAINER_TIMEOUT_MINUTES = 1
+
 const (
 	REJECTED              = "Rejected"
 	PENDING               = "Pending"
