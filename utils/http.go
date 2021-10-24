@@ -11,8 +11,8 @@ import (
 	"github.com/hasura/go-graphql-client"
 )
 
-const REQUEST_RETRIES = 3
-const RETRY_INTERVAL = time.Second
+const REQUEST_RETRIES = 10
+const RETRY_INTERVAL = 2 * time.Second
 
 // MakeSubmissionRequest calls path with a submission id on the request form
 func MakeSubmissionRequest(path string, id string) (*http.Response, error) {

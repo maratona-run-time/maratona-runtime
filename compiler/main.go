@@ -5,8 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	compiler "github.com/maratona-run-time/Maratona-Runtime/compiler/src"
+	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 
 	"github.com/go-martini/martini"
@@ -38,9 +40,13 @@ type (
 	}
 )
 
-func createCompilerServer(client utils.QueryClient, logger zerolog.Logger) *martini.ClassicMartini {
+func createCompilerServer(client utils.QueryClient, logger zerolog.Logger, serverChannel chan int) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) {
+		serverChannel <- 0
+		defer func() {
+			serverChannel <- 0
+		}()
 		var info Info
 		variables := map[string]interface{}{
 			"id": graphql.ID(req.ID),
@@ -109,6 +115,12 @@ func main() {
 	logger, logFile := utils.InitLogger("compiler")
 	defer logFile.Close()
 	client := graphql.NewClient("http://orm:8084/graphql", nil)
-	m := createCompilerServer(client, logger)
-	m.RunOnAddr(":8081")
+	serverChannel := make(chan int)
+	m := createCompilerServer(client, logger, serverChannel)
+	go m.RunOnAddr(":8081")
+	select {
+	case <-serverChannel:
+		<-serverChannel
+	case <-time.After(model.CONTAINER_TIMEOUT_MINUTES * time.Minute):
+	}
 }
