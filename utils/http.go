@@ -7,12 +7,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"time"
+	"math"
 
 	"github.com/hasura/go-graphql-client"
 )
 
-const REQUEST_RETRIES = 10
-const RETRY_INTERVAL = 2 * time.Second
+const REQUEST_RETRIES = 7
 
 // MakeSubmissionRequest calls path with a submission id on the request form
 func MakeSubmissionRequest(path string, id string) (*http.Response, error) {
@@ -39,7 +39,7 @@ func MakeSubmissionRequest(path string, id string) (*http.Response, error) {
 		if err == nil {
 			return res, err
 		}
-		time.Sleep(RETRY_INTERVAL)
+		time.Sleep(time.Duration(math.Pow(2, float64(retry_number))) * time.Second)
 		retry_number++
 	}
 	return nil, err
