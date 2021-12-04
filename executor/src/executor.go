@@ -21,6 +21,7 @@ import (
 func Execute(path string,
 	inputsFolder string,
 	timeout float32,
+	memoryLimitMB int,
 	logger zerolog.Logger) []model.ExecutionResult {
 
 	var files []string
@@ -45,6 +46,8 @@ func Execute(path string,
 	for _, inputFileName := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
 		defer cancel()
+		logger.Debug().Msgf("Memory limit is %v", memoryLimitMB)
+		ctx = context.WithValue(ctx, "memory_limit", memoryLimitMB)
 
 		errorOutput := make(chan error)
 		output := make(chan []byte)
@@ -65,15 +68,17 @@ func Execute(path string,
 			logger.Debug().Msg("Time limit exceeded")
 			return res
 		case err := <-errorOutput:
-			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: model.RUNTIME_ERROR, Message: err.Error()})
-			logger.Debug().Msg("Runtime error")
+			if err.Error() == model.MEMORY_LIMIT_EXCEEDED {
+				res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "MLE", Message: err.Error()})
+				logger.Debug().Msg("Memory Limit Exceeded")
+			} else {
+				res = append(res, model.ExecutionResult{TestName: inputFileName, Status: model.RUNTIME_ERROR, Message: err.Error()})
+				logger.Debug().Msg("Runtime error")
+			}
 			return res
 		case out := <-output:
-			if string(out) == "Memory limit exceeded" {
-				res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "MLE", Message: string(out)})
-			} else {
-				res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "OK", Message: string(out)})
-			}
+			logger.Debug().Msgf("Run OK for %v: %v", inputFileName, string(out))
+			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "OK", Message: string(out)})
 		}
 	}
 	logger.Debug().Msg("Executions finished")
@@ -90,10 +95,13 @@ func execute(ctx context.Context, executable string, inputFile *os.File, output 
 		return
 	}
 	// This command may be in kilobytes or in bytes depending on operating system
-	memoryUsageMb := cmd.ProcessState.SysUsage().(*syscall.Rusage).Maxrss / 1024
-	if memoryUsageMb >= 16 {
-		output <- []byte("Memory limit exceeded")
-	} else {
-		output <- programOutput
+	memoryUsageMB := cmd.ProcessState.SysUsage().(*syscall.Rusage).Maxrss / 1024
+	memoryLimit, ok := ctx.Value("memory_limit").(int64)
+	fmt.Printf("memory usage %v limit %v ok %v\n", memoryUsageMB, memoryLimit, ok)
+	// TODO: checar se ok esta True
+	if ok && memoryUsageMB > memoryLimit {
+		errorOutput <- fmt.Errorf(model.MEMORY_LIMIT_EXCEEDED)
+		return
 	}
+	output <- programOutput
 }

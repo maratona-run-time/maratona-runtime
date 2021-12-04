@@ -29,8 +29,9 @@ type (
 		Content  []byte
 	}
 	Challenge struct {
-		TimeLimit float32
-		Inputs    []Input
+		TimeLimit   float32
+		MemoryLimit int
+		Inputs      []Input
 	}
 	Submission struct {
 		Challenge Challenge
@@ -76,7 +77,7 @@ func createExecutorServer(client utils.QueryClient, logger zerolog.Logger, serve
 			}
 		}
 
-		res := executor.Execute("/var/program.out", "inputs", info.Submission.Challenge.TimeLimit, logger)
+		res := executor.Execute("/var/program.out", "inputs", info.Submission.Challenge.TimeLimit, info.Submission.Challenge.MemoryLimit, logger)
 		jsonResult, convertErr := json.Marshal(res)
 		if convertErr != nil {
 			msg := "An error occurred while trying to convert the execution result into a json format"

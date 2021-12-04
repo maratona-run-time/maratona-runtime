@@ -1,0 +1,8 @@
+kill -9 $(lsof -ti :8080)
+kill -9 $(lsof -ti :8081)
+kill -9 $(lsof -ti :8082)
+kill -9 $(lsof -ti :8083)
+kill -9 $(lsof -ti :8084)
+kill -9 $(lsof -ti :5432)
+kill -9 $(lsof -ti :5672)
+kill -9 $(lsof -ti :15672)
