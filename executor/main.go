@@ -1,116 +1,76 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"mime/multipart"
+	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/go-martini/martini"
+	graphql "github.com/hasura/go-graphql-client"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 	"github.com/rs/zerolog"
 )
 
-// FileForm defines the data types expected by the POST method.
-// Receives a binary file and a set of input files.
+// FileForm receives a submission ID
 type FileForm struct {
-	Binary *multipart.FileHeader   `form:"binary"`
-	Inputs []*multipart.FileHeader `form:"inputs"`
+	ID string `form:"id"`
 }
 
-func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
+type (
+	Input struct {
+		FileName string
+		Content  []byte
+	}
+	Challenge struct {
+		TimeLimit float32
+		Inputs    []Input
+	}
+	Submission struct {
+		Challenge Challenge
+	}
+	Info struct {
+		Submission Submission `graphql:"submission(id: $id)"`
+	}
+)
+
+func createExecutorServer(client utils.QueryClient, logger zerolog.Logger) *martini.ClassicMartini {
 	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, f FileForm) []byte {
-		receivedFile, rErr := f.Binary.Open()
-		if rErr != nil {
-			msg := "An error occurred while trying to open the binary file named '" + f.Binary.Filename + "'"
-			utils.WriteResponse(rs, http.StatusBadRequest, msg, rErr)
+	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) []byte {
+		var info Info
+		variables := map[string]interface{}{
+			"id": graphql.ID(req.ID),
+		}
+		graphqlErr := client.Query(context.Background(), &info, variables)
+		if graphqlErr != nil {
+			msg := "An error occurred while trying to fetch submission '" + req.ID + "' details"
 			logger.Error().
-				Err(rErr).
+				Err(graphqlErr).
 				Msg(msg)
+			utils.WriteResponse(rs, http.StatusBadRequest, msg, graphqlErr)
 			return nil
 		}
-
-		binaryFile, bErr := os.Create("program.out")
-		if bErr != nil {
-			msg := "An error occurred while trying to create a local empty file"
-			utils.WriteResponse(rs, http.StatusInternalServerError, msg, bErr)
-			logger.Error().
-				Err(bErr).
-				Msg(msg)
-			return nil
-		}
-
-		exeErr := os.Chmod("program.out", 0777)
-		if exeErr != nil {
-			msg := "An error occurred while trying to give execution permission to a local empty file"
-			utils.WriteResponse(rs, http.StatusInternalServerError, msg, exeErr)
-			logger.Error().
-				Err(exeErr).
-				Msg(msg)
-			return nil
-		}
-
-		_, copyErr := io.Copy(binaryFile, receivedFile)
-		if copyErr != nil {
-			msg := "An error occurred while trying to copy the received binary to a local file"
-			utils.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
-			logger.Error().
-				Err(copyErr).
-				Msg(msg)
-			return nil
-		}
-
-		binaryFile.Close()
-		receivedFile.Close()
 
 		os.Mkdir("inputs", 0700)
 
-		for _, file := range f.Inputs {
-			if file == nil {
-				msg := "Received nil input file on the executor"
-				utils.WriteResponse(rs, http.StatusBadRequest, msg, nil)
+		for _, input := range info.Submission.Challenge.Inputs {
+			testFileName := fmt.Sprintf("inputs/%s", input.FileName)
+			writeErr := ioutil.WriteFile(testFileName, input.Content, 0777)
+			if writeErr != nil {
+				msg := "An error occurred while trying to write the received test to a local file named '" + testFileName
+				utils.WriteResponse(rs, http.StatusInternalServerError, msg, writeErr)
 				logger.Error().
-					Msg(msg)
-				return nil
-			}
-			testFileName := fmt.Sprintf("inputs/%s", file.Filename)
-			testFile, testFileErr := os.Create(testFileName)
-			if testFileErr != nil {
-				msg := "An error occurred while trying to create a local file named '" + file.Filename + "' on 'inputs/' folder"
-				utils.WriteResponse(rs, http.StatusBadRequest, msg, testFileErr)
-				logger.Error().
-					Err(testFileErr).
-					Msg(msg)
-				return nil
-			}
-			defer testFile.Close()
-			receivedTestFile, rfErr := file.Open()
-			if rfErr != nil {
-				msg := "An error occurred while trying to open the received test file named '" + file.Filename + "'"
-				utils.WriteResponse(rs, http.StatusBadRequest, msg, rfErr)
-				logger.Error().
-					Err(rfErr).
-					Msg(msg)
-				return nil
-			}
-			defer receivedTestFile.Close()
-			_, copyErr := io.Copy(testFile, receivedTestFile)
-			if copyErr != nil {
-				msg := "An error occurred while trying to copy the received test to a local file named '" + file.Filename + "' on 'inputs/' folder"
-				utils.WriteResponse(rs, http.StatusInternalServerError, msg, copyErr)
-				logger.Error().
-					Err(copyErr).
+					Err(writeErr).
 					Msg(msg)
 				return nil
 			}
 		}
 
-		res := executor.Execute("program.out", "inputs", 2., logger)
+		res := executor.Execute("/var/program.out", "inputs", info.Submission.Challenge.TimeLimit, logger)
 		jsonResult, convertErr := json.Marshal(res)
 		if convertErr != nil {
 			msg := "An error occurred while trying to convert the execution result into a json format"
@@ -128,6 +88,7 @@ func createExecutorServer(logger zerolog.Logger) *martini.ClassicMartini {
 func main() {
 	logger, logFile := utils.InitLogger("executor")
 	defer logFile.Close()
-	m := createExecutorServer(logger)
-	m.RunOnAddr(":8080")
+	client := graphql.NewClient("http://orm:8084/graphql", nil)
+	m := createExecutorServer(client, logger)
+	m.RunOnAddr(":8082")
 }

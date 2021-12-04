@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
+	"strconv"
 	"testing"
 
 	"github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/rs/zerolog/log"
 )
 
 func resultEqual(a, b model.ExecutionResult) bool {
@@ -22,36 +26,18 @@ func resultEqual(a, b model.ExecutionResult) bool {
 	}
 }
 
-func createRequestForm(writer *multipart.Writer, filePath string, inputPaths []string) error {
-	fieldName := "binary"
-	fileName := path.Base(filePath)
-	err := utils.CreateFormFileFromFilePath(writer, fieldName, fileName, filePath)
-	if err != nil {
-		return err
-	}
-	for _, inputPath := range inputPaths {
-		fieldName = "inputs"
-		fileName = path.Base(inputPath)
-		err = utils.CreateFormFileFromFilePath(writer, fieldName, fileName, inputPath)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func createRequest(t *testing.T, filePath string, inputPaths []string) *http.Request {
+func createRequest(t *testing.T, id string) *http.Request {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
-	err := createRequestForm(writer, filePath, inputPaths)
+	err := utils.CreateFormField(writer, "id", id)
 	if err != nil {
-		t.Error("could not create request form")
+		panic("Could not create request form")
 	}
 	writer.Close()
 
 	req, err := http.NewRequest("POST", "/", buffer)
 	if err != nil {
-		t.Error("could not create request")
+		panic("Could not create request")
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
@@ -59,6 +45,21 @@ func createRequest(t *testing.T, filePath string, inputPaths []string) *http.Req
 }
 
 func TestExecutorServer(t *testing.T) {
+	t.Cleanup(
+		func() {
+			dir, err := ioutil.ReadDir("inputs")
+			if err != nil {
+				log.Error().Err(err).Msg("Error reading the contents of the 'inputs' directory")
+			}
+			for _, d := range dir {
+				err = os.Remove(path.Join("inputs", d.Name()))
+				if err != nil {
+					log.Error().Err(err).Msg("Error deleting file " + d.Name())
+					t.FailNow()
+				}
+			}
+		})
+
 	tests := []struct {
 		name           string
 		filePath       string
@@ -133,7 +134,7 @@ func TestExecutorServer(t *testing.T) {
 				},
 				{
 					TestName: "inputs/4.in",
-					Status:   "TLE",
+					Status:   model.TIME_LIMIT_EXCEEDED,
 					Message:  "Tempo limite excedido",
 				},
 			},
@@ -148,7 +149,7 @@ func TestExecutorServer(t *testing.T) {
 			expectedResult: []model.ExecutionResult{
 				{
 					TestName: "inputs/1.in",
-					Status:   "RTE",
+					Status:   model.RUNTIME_ERROR,
 					Message:  "exit status 1",
 				},
 			},
@@ -157,10 +158,44 @@ func TestExecutorServer(t *testing.T) {
 	}
 
 	logger := utils.InitDummyLogger()
-	m := createExecutorServer(logger)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := createRequest(t, test.filePath, test.inputPaths)
+			var inputs []Input
+			for _, filepath := range test.inputPaths {
+				binary, err := ioutil.ReadFile(filepath)
+				if err != nil {
+					panic("Could not read testfile from " + filepath)
+				}
+				inputs = append(inputs, Input{
+					FileName: path.Base(filepath),
+					Content:  binary,
+				})
+			}
+			binary, err := ioutil.ReadFile(test.filePath)
+			if err != nil {
+				panic("Could not read executable file from " + test.filePath)
+			}
+			err = ioutil.WriteFile("/var/program.out", binary, 0777)
+			if err != nil {
+				panic("Could not write executable file to /var/program.out")
+			}
+			id := strconv.Itoa(rand.Int())
+			var client utils.GraphqlMock = utils.GraphqlMock{
+				Test: t,
+				Object: Info{
+					Submission: Submission{
+						Challenge: Challenge{
+							TimeLimit: 1.0,
+							Inputs:    inputs,
+						},
+					},
+				},
+				Variables: map[string]interface{}{
+					"id": id,
+				},
+			}
+			m := createExecutorServer(client, logger)
+			req := createRequest(t, id)
 			res := httptest.NewRecorder()
 			m.ServeHTTP(res, req)
 			if res.Code != test.expectedStatus {

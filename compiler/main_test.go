@@ -3,46 +3,48 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"strconv"
 	"testing"
 
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
+	"github.com/rs/zerolog/log"
 )
 
-func createRequestForm(writer *multipart.Writer, language, filePath string) error {
-	fieldName := "language"
-	err := utils.CreateFormField(writer, fieldName, language)
-	if err != nil {
-		return err
-	}
-	fieldName = "source"
-	fileName := "source"
-	return utils.CreateFormFileFromFilePath(writer, fieldName, fileName, filePath)
-}
-
-func createRequest(t *testing.T, language, filePath string) *http.Request {
+func createRequest(t *testing.T, id string) *http.Request {
 	buffer := new(bytes.Buffer)
 	writer := multipart.NewWriter(buffer)
-	err := createRequestForm(writer, language, filePath)
+	err := utils.CreateFormField(writer, "id", id)
 	if err != nil {
-		t.Error("could not create request form")
+		panic("Could not create request form")
 	}
 	writer.Close()
 
 	req, err := http.NewRequest("POST", "/", buffer)
 	if err != nil {
-		t.Error("could not create request")
+		panic("Could not create request")
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req
 }
+func cleanUp() {
+	errRem := os.Remove("executable")
+	if errRem != nil {
+		log.Error().
+			Err(errRem).
+			Msg("Error removing 'executable'")
+	}
+}
 
 func TestCompilerServer(t *testing.T) {
+	t.Cleanup(cleanUp)
+
 	tests := []struct {
 		name           string
 		language       string
@@ -88,13 +90,31 @@ func TestCompilerServer(t *testing.T) {
 	}
 
 	logger := utils.InitDummyLogger()
-	m := createCompilerServer(logger)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := createRequest(t, test.language, test.filepath)
+			binary, readErr := ioutil.ReadFile(test.filepath)
+			if readErr != nil {
+				panic("Could not read testfile from " + test.filepath)
+			}
+			id := strconv.Itoa(rand.Int())
+			var client utils.GraphqlMock = utils.GraphqlMock{
+				Test: t,
+				Object: Info{
+					Submission: Submission{
+						Language: test.language,
+						Source:   binary,
+					},
+				},
+				Variables: map[string]interface{}{
+					"id": id,
+				},
+			}
+			m := createCompilerServer(client, logger)
+			req := createRequest(t, id)
 			res := httptest.NewRecorder()
 			m.ServeHTTP(res, req)
 			if res.Code != test.expectedStatus {
+				t.Logf("request body: %v", res.Body)
 				t.Errorf("expected status %v, got %v", test.expectedStatus, res.Code)
 			}
 			if res.Code != http.StatusOK {

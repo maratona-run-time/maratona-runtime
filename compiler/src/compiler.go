@@ -9,7 +9,7 @@ import (
 )
 
 // Compile takes a filename, a string identifiying the compiler/interpreter to be used and
-// executes the apropriate compilation step. Returns the compiled program filename.
+// executes the appropriate compilation step. Returns the compiled program filename.
 func Compile(compiler string, fileName string, logger zerolog.Logger) (string, error) {
 	compilationCommand := map[string][]string{
 		"C":      {"gcc", fileName, "-o", "program.out"},

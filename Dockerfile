@@ -1,17 +1,10 @@
-FROM golang:alpine AS build
-# create a working directory
+# Image to test the project on an alpine environment
+FROM golang:alpine 
 WORKDIR /go/src/app
-#COPY go.mod go.sum ./
-#RUN go mod download
-ENV CGO_ENABLED=0
+RUN apk add g++ gcc go python3
+COPY go.mod go.sum ./
+RUN go mod download
 # add source code
 COPY . .
-# run main.go
-RUN go build -o main
-#CMD ["go", "run", "main.go"]
-
-FROM scratch
-
-WORKDIR /go/src/app
-COPY --from=build /go/src/app/main .
-CMD ["./main"]
+# run project tests
+CMD ["./test.sh"]

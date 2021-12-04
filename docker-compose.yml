@@ -6,30 +6,38 @@ services:
     build:
       context: ./
       dockerfile: orchestrator/Dockerfile
+    image: orchestrator
     networks:
       - maratona-net
   compiler:
     ports:
-      - "8081:8080"
+      - "8081:8081"
     build:
       context: ./
       dockerfile: compiler/Dockerfile
+    image: compiler
+    volumes:
+      - submission:/var
     networks:
       - maratona-net
   executor:
     ports:
-      - "8082:8080"
+      - "8082:8082"
     build:
       context: ./
       dockerfile: executor/Dockerfile
+    image: executor
+    volumes:
+      - submission:/var
     networks:
       - maratona-net
   verdict:
     ports:
-      - "8083:8080"
+      - "8083:8083"
     build:
       context: ./
       dockerfile: verdict/Dockerfile
+    image: verdict
     networks:
       - maratona-net
   postgres:
@@ -46,16 +54,24 @@ services:
       - database-net
   orm:
     ports:
-      - "8084:8080"
+      - "8084:8084"
     build:
       context: ./
       dockerfile: orm/Dockerfile
+    image: orm
     networks:
       - maratona-net
       - database-net
-
+  rabbitmq:
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    image: "rabbitmq:management-alpine"
+    networks:
+      - maratona-net
 networks: 
   maratona-net: 
   database-net:
 volumes:
     postgres:
+    submission:

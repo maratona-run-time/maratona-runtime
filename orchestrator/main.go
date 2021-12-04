@@ -1,91 +1,20 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
+	"time"
 
-	"github.com/go-martini/martini"
-	"github.com/maratona-run-time/Maratona-Runtime/model"
+	"github.com/maratona-run-time/Maratona-Runtime/queue"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
-	"github.com/martini-contrib/binding"
 )
 
-var getChallengeError = errors.New("Error getting challenge")
 var verdictResponseError = errors.New("Error on verdict response")
 
-func createTestFileField(writer *multipart.Writer, fieldName string, files []model.TestFile) error {
-	for _, file := range files {
-		err := utils.CreateFormFileFromContent(writer, fieldName, file.Content, file.Filename)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func getChallengeInfo(challengeID string) (model.Challenge, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://orm:8080/challenge/%v", challengeID), new(bytes.Buffer))
-	if err != nil {
-		return model.Challenge{}, err
-	}
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return model.Challenge{}, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return model.Challenge{}, getChallengeError
-	}
-
-	var challenge model.Challenge
-	binary, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return model.Challenge{}, err
-	}
-	err = json.Unmarshal(binary, &challenge)
-	return challenge, err
-}
-
-func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, error) {
-	buffer := new(bytes.Buffer)
-	writer := multipart.NewWriter(buffer)
-
-	fieldName := "language"
-	err := utils.CreateFormField(writer, fieldName, form.Language)
-	if err != nil {
-		return nil, err
-	}
-
-	err = utils.CreateFormFileFromFileHeader(writer, "source", form.Source)
-	if err != nil {
-		return nil, err
-	}
-
-	err = createTestFileField(writer, "inputs", challenge.Inputs)
-	if err != nil {
-		return nil, err
-	}
-
-	err = createTestFileField(writer, "outputs", challenge.Outputs)
-	if err != nil {
-		return nil, err
-	}
-
-	writer.Close()
-
-	req, err := http.NewRequest("POST", "http://verdict:8080", buffer)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	client := &http.Client{}
-	res, err := client.Do(req)
+func callVerdict(id string) ([]byte, error) {
+	res, err := utils.MakeSubmissionRequest("http://mart-verdict:8083", id)
 	if err != nil {
 		return nil, err
 	}
@@ -102,22 +31,21 @@ func callVerdict(challenge model.Challenge, form model.SubmissionForm) ([]byte, 
 }
 
 func main() {
-	m := martini.Classic()
-	m.Post("/", binding.MultipartForm(model.SubmissionForm{}), func(rs http.ResponseWriter, rq *http.Request, form model.SubmissionForm) {
-		challenge, err := getChallengeInfo(form.ChallengeID)
-		if err != nil {
-			msg := fmt.Sprintf("Could not find challenge %v", form.ChallengeID)
-			utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
-		}
+	logger, logFile := utils.InitLogger("orchestrator")
+	defer logFile.Close()
 
-		verdictResponse, err := callVerdict(challenge, form)
+	msgs, err := queue.GetSubmissionChannel()
+	for err != nil {
+		fmt.Println(err)
+		msgs, err = queue.GetSubmissionChannel()
+		time.Sleep(2 * time.Second)
+	}
+	for queueMessage := range msgs {
+		id := string(queueMessage.Body)
+		verdictResponse, err := callVerdict(id)
 		if err != nil {
-			msg := "Could not get response from verdict"
-			utils.WriteResponse(rs, http.StatusBadRequest, msg, err)
-			return
+			logger.Error().Err(err).Msgf("An error occurred when calling verdict with submission id %v", id)
 		}
-
-		rs.Write(verdictResponse)
-	})
-	m.RunOnAddr(":8080")
+		fmt.Println(verdictResponse)
+	}
 }

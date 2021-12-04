@@ -49,7 +49,7 @@ func Execute(path string,
 		errorOutput := make(chan error)
 		output := make(chan []byte)
 
-		executable := fmt.Sprintf("./%s", path)
+		executable := fmt.Sprintf("%s", path)
 
 		file, fileErr := os.Open(inputFileName)
 		if fileErr != nil {
@@ -61,18 +61,18 @@ func Execute(path string,
 
 		select {
 		case <-ctx.Done():
-			res = append(res, model.ExecutionResult{inputFileName, "TLE", "Time limit exceeded"})
+			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: model.TIME_LIMIT_EXCEEDED, Message: "Time limit exceeded"})
 			logger.Debug().Msg("Time limit exceeded")
 			return res
 		case err := <-errorOutput:
-			res = append(res, model.ExecutionResult{inputFileName, "RTE", err.Error()})
-			logger.Debug().Msg("Run time error")
+			res = append(res, model.ExecutionResult{TestName: inputFileName, Status: model.RUNTIME_ERROR, Message: err.Error()})
+			logger.Debug().Msg("Runtime error")
 			return res
 		case out := <-output:
 			if string(out) == "Memory limit exceeded" {
-				res = append(res, model.ExecutionResult{inputFileName, "MLE", string(out)})
+				res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "MLE", Message: string(out)})
 			} else {
-				res = append(res, model.ExecutionResult{inputFileName, "OK", string(out)})
+				res = append(res, model.ExecutionResult{TestName: inputFileName, Status: "OK", Message: string(out)})
 			}
 		}
 	}

@@ -1,10 +1,14 @@
-FROM golang:alpine
-EXPOSE 8080
+FROM golang:alpine AS build
+EXPOSE 8081
 WORKDIR /go/src/app
-RUN apk add g++
-RUN apk add gcc
 COPY go.sum go.mod ./
 RUN go mod download
 COPY utils/ utils/
 COPY compiler/ compiler/
-CMD ["go", "run", "compiler/main.go"]
+RUN go build compiler/main.go
+
+FROM alpine
+WORKDIR /go/src/app
+RUN apk add g++ gcc go
+COPY --from=build /go/src/app/main .
+CMD ["./main"]
