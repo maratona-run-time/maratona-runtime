@@ -1,34 +1,14 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"time"
 
+	"github.com/hasura/go-graphql-client"
+	"github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/queue"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 )
-
-var verdictResponseError = errors.New("Error on verdict response")
-
-func callVerdict(id string) ([]byte, error) {
-	res, err := utils.MakeSubmissionRequest("http://mart-verdict:8083", id)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return nil, verdictResponseError
-	}
-
-	binary, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return binary, nil
-}
 
 func main() {
 	logger, logFile := utils.InitLogger("orchestrator")
@@ -42,10 +22,15 @@ func main() {
 	}
 	for queueMessage := range msgs {
 		id := string(queueMessage.Body)
-		verdictResponse, err := callVerdict(id)
+		client := graphql.NewClient("http://orm:8084/graphql", nil)
+		err := utils.SaveSubmissionStatus(client, id, model.PENDING, "")
 		if err != nil {
-			logger.Error().Err(err).Msgf("An error occurred when calling verdict with submission id %v", id)
+			msg := "An error occurred while trying to save submission '" + id + "' '" + model.PENDING + "' status"
+			logger.Error().
+				Err(err).
+				Msg(msg)
 		}
-		fmt.Println(verdictResponse)
+		logger.Info().Msgf("Creating mart Pod for submission %v", id)
+		createPod(id)
 	}
 }

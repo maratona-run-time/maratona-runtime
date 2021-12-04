@@ -7,10 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-martini/martini"
 	graphql "github.com/hasura/go-graphql-client"
 	executor "github.com/maratona-run-time/Maratona-Runtime/executor/src"
+	model "github.com/maratona-run-time/Maratona-Runtime/model"
 	"github.com/maratona-run-time/Maratona-Runtime/utils"
 	"github.com/martini-contrib/binding"
 	"github.com/rs/zerolog"
@@ -38,9 +40,13 @@ type (
 	}
 )
 
-func createExecutorServer(client utils.QueryClient, logger zerolog.Logger) *martini.ClassicMartini {
+func createExecutorServer(client utils.QueryClient, logger zerolog.Logger, serverChannel chan int) *martini.ClassicMartini {
 	m := martini.Classic()
 	m.Post("/", binding.MultipartForm(FileForm{}), func(rs http.ResponseWriter, rq *http.Request, req FileForm) []byte {
+		serverChannel <- 0
+		defer func() {
+			serverChannel <- 0
+		}()
 		var info Info
 		variables := map[string]interface{}{
 			"id": graphql.ID(req.ID),
@@ -89,6 +95,12 @@ func main() {
 	logger, logFile := utils.InitLogger("executor")
 	defer logFile.Close()
 	client := graphql.NewClient("http://orm:8084/graphql", nil)
-	m := createExecutorServer(client, logger)
-	m.RunOnAddr(":8082")
+	serverChannel := make(chan int)
+	m := createExecutorServer(client, logger, serverChannel)
+	go m.RunOnAddr(":8082")
+	select {
+	case <-serverChannel:
+		<-serverChannel
+	case <-time.After(model.CONTAINER_TIMEOUT_MINUTES * time.Minute):
+	}
 }
